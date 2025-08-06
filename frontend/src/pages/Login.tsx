@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext.tsx';
 import { Eye, EyeOff, Lock, Mail, User, Building } from 'lucide-react';
 
 interface LoginFormData {

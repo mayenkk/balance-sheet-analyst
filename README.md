@@ -42,7 +42,7 @@ A comprehensive AI-powered platform for balance sheet analysis, designed for fin
 - **Database**: PostgreSQL with SQLAlchemy ORM
 - **Vector Database**: ChromaDB for RAG pipeline
 - **PDF Processing**: PyMuPDF, pdfplumber for text extraction
-- **AI Integration**: OpenAI GPT-4 with custom prompts
+- **AI Integration**: Groq LLM with custom prompts
 - **Authentication**: JWT with OAuth2
 - **Caching**: Redis for performance optimization
 
@@ -56,7 +56,7 @@ A comprehensive AI-powered platform for balance sheet analysis, designed for fin
 ### **AI/ML Stack**
 - **RAG Pipeline**: ChromaDB + Sentence Transformers
 - **Embedding Model**: all-MiniLM-L6-v2 for text embeddings
-- **LLM**: OpenAI GPT-4 for intelligent analysis
+- **LLM**: Groq (Llama3-70B) for intelligent analysis
 - **Text Processing**: NLTK, spaCy for NLP tasks
 
 ### **Infrastructure**
@@ -67,12 +67,10 @@ A comprehensive AI-powered platform for balance sheet analysis, designed for fin
 ## 🚀 Quick Start
 
 ### **Prerequisites**
-- Python 3.9+
-- Node.js 18+
-- PostgreSQL (local or managed)
-- OpenAI API key (for AI features)
+- Docker and Docker Compose
+- Gemini API key (for AI features)
 
-### **Local Development**
+### **Installation**
 
 1. **Clone the repository**
    ```bash
@@ -86,10 +84,10 @@ A comprehensive AI-powered platform for balance sheet analysis, designed for fin
    ./setup.sh
    ```
 
-3. **Configure OpenAI API**
+3. **Configure Gemini API**
    ```bash
-   # Edit .env file and add your OpenAI API key
-   OPENAI_API_KEY=your-openai-api-key-here
+   # Edit .env file and add your Gemini API key
+   GEMINI_API_KEY=your-gemini-api-key-here
    ```
 
 4. **Start the backend (FastAPI)**
@@ -132,7 +130,7 @@ Set these in the Vercel dashboard for both frontend and backend:
 - `DATABASE_URL`
 - `REDIS_URL` (if used)
 - `SECRET_KEY`
-- `OPENAI_API_KEY`
+- `GEMINI_API_KEY`
 - `CHROMA_PERSIST_DIR` (or use a cloud vector DB)
 
 ## 📊 Usage Guide
@@ -263,7 +261,7 @@ npm test
 ```bash
 # Required
 DATABASE_URL=postgresql://user:pass@host:port/db
-OPENAI_API_KEY=your-openai-key
+GEMINI_API_KEY=your-gemini-key
 SECRET_KEY=your-secret-key
 
 # Optional

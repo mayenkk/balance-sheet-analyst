@@ -10,21 +10,27 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     
     # Database
-    DATABASE_URL: str = "postgresql://user:password@localhost/balance_sheet_db"
+    DATABASE_URL: str = "postgresql://postgres:postgres@localhost/balance_sheet_db"
     
     # Redis
     REDIS_URL: str = "redis://localhost:6379"
     
     # Security
-    SECRET_KEY: str = "your-secret-key-here"
+    SECRET_KEY: str = "ky1qucGOt-uGRNVEbDO7gBcgFSyaHS-bG7K9cO4U5N8"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
-    # OpenAI
-    OPENAI_API_KEY: Optional[str] = None
-    OPENAI_MODEL: str = "gpt-4"
-    OPENAI_MAX_TOKENS: int = 4000
-    OPENAI_TEMPERATURE: float = 0.3
+    # Groq
+    GROQ_API_KEY: Optional[str] = None
+    GROQ_MODEL: str = "llama3-70b-8192"
+    GROQ_MAX_TOKENS: int = 4000
+    GROQ_TEMPERATURE: float = 0.3
+
+    # Gemini
+    GEMINI_API_KEY: Optional[str] = "AIzaSyDbVkWeNUtvahTTSZEiVEhLAo7hoQFXd7c"
+    GEMINI_MODEL: str = "gemini-1.5-pro"
+    GEMINI_MAX_TOKENS: int = 4000
+    GEMINI_TEMPERATURE: float = 0.3
     
     # CORS
     ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8000"]

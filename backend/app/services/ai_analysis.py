@@ -1,4 +1,4 @@
-import openai
+import google.generativeai as genai
 import json
 import pandas as pd
 from typing import List, Dict, Any, Optional
@@ -12,9 +12,16 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Configure OpenAI
-if settings.OPENAI_API_KEY:
-    openai.api_key = settings.OPENAI_API_KEY
+# Configure Gemini
+genai_client = None
+if settings.GEMINI_API_KEY:
+    try:
+        genai.configure(api_key=settings.GEMINI_API_KEY)
+        genai_client = genai.GenerativeModel(settings.GEMINI_MODEL)
+        logger.info("Gemini client initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize Gemini client: {e}")
+        genai_client = None
 
 class AIAnalysisService:
     """Service for AI-powered balance sheet analysis using RAG pipeline"""
@@ -48,12 +55,25 @@ class AIAnalysisService:
             # Get relevant context from vector store
             context = self.vector_store.get_context_for_query(query, user_verticals)
             
+            # Debug logging
+            logger.info(f"User verticals: {user_verticals}")
+            logger.info(f"Context length: {len(context) if context else 0}")
+            logger.info(f"Context preview: {context[:200] if context else 'None'}")
+            
             if not context or context == "No relevant information found in the balance sheet data.":
+                # Check vector store health
+                health = self.vector_store.health_check()
+                logger.warning(f"Vector store health: {health}")
+                
                 return {
                     "error": "No relevant information found in the balance sheet data for your query",
                     "insights": [],
                     "recommendations": [],
-                    "charts": []
+                    "charts": [],
+                    "debug_info": {
+                        "user_verticals": user_verticals,
+                        "vector_store_health": health
+                    }
                 }
             
             # Create analysis prompt with context
@@ -132,81 +152,60 @@ class AIAnalysisService:
     ) -> str:
         """Create prompt for RAG-based analysis"""
         
-        prompt = f"""
-You are a senior financial analyst with expertise in balance sheet analysis and corporate finance. 
-You have access to balance sheet data from the following company verticals: {', '.join(user_verticals).upper()}.
+        prompt = f"""You are a financial analyst. Answer this question based on the balance sheet data:
 
-Based on the following context from the balance sheet PDF, please provide a comprehensive analysis for the user's query.
+Question: {query}
 
-CONTEXT FROM BALANCE SHEET:
+Balance Sheet Data:
 {context}
 
-USER QUERY: {query}
-
-Please provide your analysis in the following JSON format:
-{{
-    "summary": "Brief summary of the analysis",
-    "insights": [
-        {{
-            "title": "Insight title",
-            "description": "Detailed insight description",
-            "impact": "high/medium/low",
-            "evidence": "Supporting evidence from the data"
-        }}
-    ],
-    "recommendations": [
-        {{
-            "title": "Recommendation title",
-            "description": "Detailed recommendation",
-            "priority": "high/medium/low",
-            "rationale": "Why this recommendation is important"
-        }}
-    ],
-    "key_metrics": {{
-        "metric_name": "value or trend description"
-    }},
-    "risks": [
-        {{
-            "risk_type": "Type of risk",
-            "description": "Risk description",
-            "severity": "high/medium/low"
-        }}
-    ]
-}}
-
-Focus on providing actionable insights and clear recommendations based on the available data. 
-If the context doesn't contain enough information to answer the query comprehensively, 
-acknowledge the limitations and provide insights based on what is available.
-"""
+Provide a concise, professional analysis focusing on key insights and actionable recommendations. Keep your response under 300 words."""
         
         return prompt
     
     async def _get_ai_response(self, prompt: str) -> str:
-        """Get response from OpenAI API"""
-        if not settings.OPENAI_API_KEY:
-            raise Exception("OpenAI API key not configured")
+        """Get response from Gemini API"""
+        if not settings.GEMINI_API_KEY:
+            raise Exception("Gemini API key not configured")
+        
+        if not genai_client:
+            raise Exception("Gemini client not initialized")
         
         try:
-            response = openai.ChatCompletion.create(
-                model=settings.OPENAI_MODEL,
-                messages=[
+            # Add timeout and safety checks
+            response = genai_client.generate_content(
+                prompt,
+                generation_config=genai.types.GenerationConfig(
+                    max_output_tokens=settings.GEMINI_MAX_TOKENS,
+                    temperature=settings.GEMINI_TEMPERATURE,
+                ),
+                safety_settings=[
                     {
-                        "role": "system",
-                        "content": "You are a senior financial analyst with expertise in balance sheet analysis and corporate finance. Provide clear, actionable insights based on the provided context."
+                        "category": "HARM_CATEGORY_HARASSMENT",
+                        "threshold": "BLOCK_NONE",
                     },
                     {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                max_tokens=settings.OPENAI_MAX_TOKENS,
-                temperature=settings.OPENAI_TEMPERATURE
+                        "category": "HARM_CATEGORY_HATE_SPEECH",
+                        "threshold": "BLOCK_NONE",
+                    },
+                    {
+                        "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                        "threshold": "BLOCK_NONE",
+                    },
+                    {
+                        "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                        "threshold": "BLOCK_NONE",
+                    },
+                ]
             )
             
-            return response.choices[0].message.content
+            if response.text:
+                return response.text
+            else:
+                raise Exception("Empty response from Gemini API")
             
         except Exception as e:
-            logger.error(f"OpenAI API error: {e}")
+            logger.error(f"Gemini API error: {e}")
             raise Exception(f"Failed to get AI response: {str(e)}")
     
     def _parse_ai_response(self, response: str) -> Dict[str, Any]:
@@ -261,8 +260,12 @@ acknowledge the limitations and provide insights based on what is available.
         Returns: Dict with processing results
         """
         try:
+            logger.info(f"Starting PDF processing for: {pdf_path}")
+            
             # Validate PDF
             validation = self.pdf_processor.validate_pdf_structure(pdf_path)
+            logger.info(f"PDF validation result: {validation}")
+            
             if not validation["is_valid"]:
                 return {
                     "success": False,
@@ -271,12 +274,14 @@ acknowledge the limitations and provide insights based on what is available.
             
             # Process PDF and extract chunks by vertical
             vertical_chunks = self.pdf_processor.process_balance_sheet_pdf(pdf_path, db)
+            logger.info(f"Extracted verticals: {list(vertical_chunks.keys())}")
             
             # Store chunks in vector database
             storage_results = {}
             total_chunks = 0
             
             for vertical, chunks in vertical_chunks.items():
+                logger.info(f"Processing vertical '{vertical}' with {len(chunks)} chunks")
                 if chunks:
                     success = self.vector_store.store_chunks(vertical, chunks)
                     storage_results[vertical] = {
@@ -284,18 +289,25 @@ acknowledge the limitations and provide insights based on what is available.
                         "chunks_stored": len(chunks)
                     }
                     total_chunks += len(chunks)
+                    logger.info(f"Stored {len(chunks)} chunks for vertical '{vertical}', success: {success}")
                 else:
                     storage_results[vertical] = {
                         "success": False,
                         "chunks_stored": 0,
                         "error": "No chunks extracted"
                     }
+                    logger.warning(f"No chunks extracted for vertical '{vertical}'")
+            
+            # Check vector store health after storage
+            health = self.vector_store.health_check()
+            logger.info(f"Vector store health after storage: {health}")
             
             return {
                 "success": True,
                 "total_chunks": total_chunks,
                 "vertical_results": storage_results,
-                "validation": validation
+                "validation": validation,
+                "vector_store_health": health
             }
             
         except Exception as e:

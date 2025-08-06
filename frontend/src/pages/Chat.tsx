@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { Send, MessageSquare, Plus, X } from 'lucide-react';
-import { chatAPI } from '../services/api';
+import { chatAPI } from '../services/api.ts';
 import toast from 'react-hot-toast';
 
 interface Message {

@@ -2,14 +2,14 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Chat from './pages/Chat';
-import Analysis from './pages/Analysis';
-import Companies from './pages/Companies';
-import Reports from './pages/Reports';
-import Layout from './components/Layout';
+import { AuthProvider, useAuth } from './contexts/AuthContext.tsx';
+import Login from './pages/Login.tsx';
+import Dashboard from './pages/Dashboard.tsx';
+import Chat from './pages/Chat.tsx';
+import Analysis from './pages/Analysis.tsx';
+import Companies from './pages/Companies.tsx';
+import Reports from './pages/Reports.tsx';
+import Layout from './components/Layout.tsx';
 import './index.css';
 
 const queryClient = new QueryClient({

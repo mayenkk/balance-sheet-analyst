@@ -39,8 +39,11 @@ SECRET_KEY=your-super-secret-key-change-this-in-production
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 
-# OpenAI Configuration
-OPENAI_API_KEY=your-openai-api-key-here
+# Groq Configuration
+GROQ_API_KEY=your-groq-api-key-here
+
+# Gemini Configuration
+GEMINI_API_KEY=your-gemini-api-key-here
 
 # CORS
 ALLOWED_ORIGINS=["http://localhost:3000","http://localhost:8000"]
@@ -82,9 +85,11 @@ echo "   Username: analyst"
 echo "   Password: password"
 echo ""
 echo "📚 Next Steps:"
-echo "   1. Upload your balance sheet PDF using the PDF processing endpoint"
-echo "   2. The system will automatically chunk and store data by vertical"
-echo "   3. Start chatting with the AI about your balance sheet data"
+echo "   1. Get your Groq API key from https://console.groq.com/"
+echo "   2. Add your Groq API key to the .env file"
+echo "   3. Upload your balance sheet PDF using the PDF processing endpoint"
+echo "   4. The system will automatically chunk and store data by vertical"
+echo "   5. Start chatting with the AI about your balance sheet data"
 echo ""
 echo "🔧 PDF Processing Endpoints:"
 echo "   POST /api/v1/pdf/process - Upload and process PDF"

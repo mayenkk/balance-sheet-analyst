@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery } from 'react-query';
 import { Building, TrendingUp, TrendingDown, Eye, BarChart3 } from 'lucide-react';
-import { companyAPI } from '../services/api';
+import { companyAPI } from '../services/api.ts';
 
 const Companies: React.FC = () => {
   const { data: companies, isLoading } = useQuery('companies', companyAPI.getCompanies);

@@ -70,7 +70,8 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
         username=user.username,
         full_name=user.full_name,
         role=user.role,
-        is_active=user.is_active
+        is_active=user.is_active,
+        created_at=user.created_at
     )
 
 
@@ -123,7 +124,8 @@ async def login(
             username=user.username,
             full_name=user.full_name,
             role=user.role,
-            is_active=user.is_active
+            is_active=user.is_active,
+            created_at=user.created_at
         )
     }
 
@@ -137,7 +139,8 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
         username=current_user.username,
         full_name=current_user.full_name,
         role=current_user.role,
-        is_active=current_user.is_active
+        is_active=current_user.is_active,
+        created_at=current_user.created_at
     )
 
 
@@ -184,7 +187,8 @@ async def update_current_user(
         username=current_user.username,
         full_name=current_user.full_name,
         role=current_user.role,
-        is_active=current_user.is_active
+        is_active=current_user.is_active,
+        created_at=current_user.created_at
     )
 
 

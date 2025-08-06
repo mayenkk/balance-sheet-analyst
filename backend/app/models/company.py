@@ -21,8 +21,6 @@ class Company(Base):
     # Relationships
     parent_company = relationship("Company", remote_side=[id], backref="subsidiaries")
     users = relationship("User", secondary="user_companies", back_populates="companies")
-    balance_sheets = relationship("BalanceSheet", back_populates="company")
-    chat_sessions = relationship("ChatSession", back_populates="company")
     
     def get_all_subsidiaries(self):
         """Get all subsidiaries recursively"""

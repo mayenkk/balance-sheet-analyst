@@ -217,3 +217,85 @@ async def get_user_access_info(
     }
     
     return access_info 
+
+@router.get("/debug/vector-store")
+async def debug_vector_store(
+    current_user: User = Depends(get_current_user)
+):
+    """Debug endpoint to check vector store status"""
+    
+    health = ai_service.get_vector_store_health()
+    user_verticals = ai_service._get_user_verticals(current_user)
+    
+    return {
+        "vector_store_health": health,
+        "user_verticals": user_verticals,
+        "user_role": current_user.role,
+        "user_companies": [c.name for c in current_user.companies]
+    } 
+
+@router.post("/test/load-sample-data")
+async def load_sample_data(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Load sample data for testing"""
+    
+    # Check permissions
+    if current_user.role not in ["analyst", "group_ceo"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only analysts and group CEOs can load test data"
+        )
+    
+    try:
+        # Create sample PDF content
+        sample_content = """
+        RELIANCE INDUSTRIES LIMITED - BALANCE SHEET
+        
+        JIO PLATFORMS LIMITED
+        Total Assets: ₹1,50,000 Crores
+        Total Liabilities: ₹80,000 Crores
+        Current Ratio: 1.8
+        Debt-to-Equity: 0.6
+        
+        RELIANCE RETAIL VENTURES LIMITED
+        Total Assets: ₹75,000 Crores
+        Total Liabilities: ₹45,000 Crores
+        Current Ratio: 1.5
+        Debt-to-Equity: 0.8
+        
+        RELIANCE ENERGY
+        Total Assets: ₹2,00,000 Crores
+        Total Liabilities: ₹1,20,000 Crores
+        Current Ratio: 1.2
+        Debt-to-Equity: 1.1
+        
+        RELIANCE CHEMICALS
+        Total Assets: ₹90,000 Crores
+        Total Liabilities: ₹60,000 Crores
+        Current Ratio: 1.6
+        Debt-to-Equity: 0.7
+        """
+        
+        # Save sample content as text file
+        os.makedirs(settings.PDF_UPLOAD_DIR, exist_ok=True)
+        file_path = os.path.join(settings.PDF_UPLOAD_DIR, "sample_balance_sheet.txt")
+        
+        with open(file_path, "w") as f:
+            f.write(sample_content)
+        
+        # Process the sample data
+        result = await ai_service.process_pdf_and_store(file_path, db)
+        
+        return {
+            "message": "Sample data loaded successfully",
+            "result": result
+        }
+        
+    except Exception as e:
+        logger.error(f"Error loading sample data: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to load sample data: {str(e)}"
+        ) 

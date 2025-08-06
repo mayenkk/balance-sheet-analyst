@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from 'react-query';
 import { BarChart3, TrendingUp, TrendingDown, DollarSign, Building } from 'lucide-react';
-import { companyAPI } from '../services/api';
+import { companyAPI } from '../services/api.ts';
 
 const Analysis: React.FC = () => {
   const [selectedCompany, setSelectedCompany] = useState<number | null>(null);

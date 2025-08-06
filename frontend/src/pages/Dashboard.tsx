@@ -11,7 +11,8 @@ import {
   FileText,
   Users,
 } from 'lucide-react';
-import { companyAPI } from '../services/api';
+import { companyAPI } from '../services/api.ts';
+import PDFUpload from '../components/PDFUpload.tsx';
 
 const Dashboard: React.FC = () => {
   const { data: companies, isLoading } = useQuery('companies', companyAPI.getCompanies);
@@ -173,6 +174,12 @@ const Dashboard: React.FC = () => {
             );
           })}
         </div>
+      </div>
+
+      {/* PDF Upload Section */}
+      <div>
+        <h2 className="text-lg font-medium text-gray-900 mb-4">Upload Balance Sheet</h2>
+        <PDFUpload />
       </div>
 
       {/* Recent Activity */}
