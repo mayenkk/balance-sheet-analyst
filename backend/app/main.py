@@ -64,7 +64,18 @@ app.include_router(activities.router, prefix="/api/v1")
 
 # Mount static files for React app
 static_dir = os.path.join(os.getcwd(), "static")
+logger.info(f"Looking for static files in: {static_dir}")
+logger.info(f"Current working directory: {os.getcwd()}")
+logger.info(f"Static directory exists: {os.path.exists(static_dir)}")
+
 if os.path.exists(static_dir):
+    # List contents of static directory
+    try:
+        static_files = os.listdir(static_dir)
+        logger.info(f"Static files found: {static_files}")
+    except Exception as e:
+        logger.error(f"Error listing static directory: {e}")
+    
     app.mount("/app", StaticFiles(directory=static_dir, html=True), name="static")
     logger.info(f"Static files mounted from: {static_dir}")
 else:
@@ -100,17 +111,23 @@ async def health_check():
         "version": settings.VERSION
     }
 
-# Simple root endpoint for Railway health checks
+# Root endpoint - serve React app or fallback
 @app.get("/")
 async def root():
-    return {
-        "message": f"Welcome to {settings.APP_NAME}",
-        "version": settings.VERSION,
-        "status": "running",
-        "docs": "/docs",
-        "health": "/health",
-        "app": "/app"
-    }
+    index_file = os.path.join(static_dir, "index.html")
+    if os.path.exists(index_file):
+        logger.info(f"Serving React app from: {index_file}")
+        return FileResponse(index_file)
+    else:
+        logger.warning(f"index.html not found at: {index_file}")
+        return {
+            "message": f"Welcome to {settings.APP_NAME}",
+            "version": settings.VERSION,
+            "status": "running",
+            "docs": "/docs",
+            "health": "/health",
+            "app": "/app"
+        }
 
 # API info endpoint
 @app.get("/api/info")
