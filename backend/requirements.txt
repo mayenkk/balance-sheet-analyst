@@ -135,7 +135,7 @@ types-requests==2.32.4.20250611
 typing-extensions==4.14.1
 typing-inspect==0.9.0
 typing-inspection==0.4.1
-tzdata==2025b
+tzdata==2025.2
 ujson==5.10.0
 uritemplate==4.2.0
 urllib3==2.5.0
