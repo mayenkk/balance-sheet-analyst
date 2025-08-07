@@ -44,7 +44,6 @@ A comprehensive AI-powered platform for balance sheet analysis, designed for fin
 - **PDF Processing**: PyMuPDF, pdfplumber for text extraction
 - **AI Integration**: Groq LLM with custom prompts
 - **Authentication**: JWT with OAuth2
-- **Caching**: Redis for performance optimization
 
 ### **Frontend (React + TypeScript)**
 - **Framework**: React 18 with TypeScript
@@ -128,7 +127,6 @@ A comprehensive AI-powered platform for balance sheet analysis, designed for fin
 ### **Environment Variables**
 Set these in the Vercel dashboard for both frontend and backend:
 - `DATABASE_URL`
-- `REDIS_URL` (if used)
 - `SECRET_KEY`
 - `GEMINI_API_KEY`
 - `CHROMA_PERSIST_DIR` (or use a cloud vector DB)
@@ -229,7 +227,6 @@ balance-sheet-analyst/
 - **Context Length Management**: Optimized for token limits
 
 ### **Caching & Optimization**
-- **Redis Caching**: Fast response times for repeated queries
 - **Vector Indexing**: Efficient similarity search
 - **Connection Pooling**: Optimized database connections
 - **Async Processing**: Non-blocking operations
@@ -263,9 +260,6 @@ npm test
 DATABASE_URL=postgresql://user:pass@host:port/db
 GEMINI_API_KEY=your-gemini-key
 SECRET_KEY=your-secret-key
-
-# Optional
-REDIS_URL=redis://host:port
 ```
 
 ## 🤝 Contributing

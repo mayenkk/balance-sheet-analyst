@@ -3,7 +3,7 @@ import axios, { AxiosInstance, AxiosResponse } from 'axios';
 // Create axios instance
 const api: AxiosInstance = axios.create({
   baseURL: 'http://localhost:8000/api/v1',
-  timeout: 10000,
+  timeout: 60000, // Increased to 60 seconds to match backend timeout
   headers: {
     'Content-Type': 'application/json',
   },
@@ -97,6 +97,8 @@ export const chatAPI = {
   sendMessage: async (sessionId: number, content: string) => {
     const response = await api.post(`/chat/sessions/${sessionId}/messages`, {
       content,
+    }, {
+      timeout: 60000, // 60 second timeout for AI analysis
     });
     return response.data;
   },
@@ -203,6 +205,59 @@ export const analyticsAPI = {
     const response = await api.get(`/analytics/${companyId}/forecast`, {
       params: { periods },
     });
+    return response.data;
+  },
+};
+
+// PDF API
+export const pdfAPI = {
+  processPDF: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await api.post('/pdf/process', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  getUploadedFiles: async () => {
+    const response = await api.get('/pdf/uploaded-files');
+    return response.data;
+  },
+
+  getAllFiles: async () => {
+    const response = await api.get('/pdf/all-files');
+    return response.data;
+  },
+
+  getUploadedFile: async (fileId: number) => {
+    const response = await api.get(`/pdf/uploaded-files/${fileId}`);
+    return response.data;
+  },
+
+  getVectorStoreHealth: async () => {
+    const response = await api.get('/pdf/health');
+    return response.data;
+  },
+};
+
+// Activities API
+export const activitiesAPI = {
+  getRecentActivities: async () => {
+    const response = await api.get('/activities/recent');
+    return response.data;
+  },
+
+  getUserActivities: async (userId: number) => {
+    const response = await api.get(`/activities/user/${userId}`);
+    return response.data;
+  },
+
+  getAllActivities: async () => {
+    const response = await api.get('/activities/all');
     return response.data;
   },
 };

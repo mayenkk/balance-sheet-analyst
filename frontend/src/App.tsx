@@ -6,9 +6,6 @@ import { AuthProvider, useAuth } from './contexts/AuthContext.tsx';
 import Login from './pages/Login.tsx';
 import Dashboard from './pages/Dashboard.tsx';
 import Chat from './pages/Chat.tsx';
-import Analysis from './pages/Analysis.tsx';
-import Companies from './pages/Companies.tsx';
-import Reports from './pages/Reports.tsx';
 import Layout from './components/Layout.tsx';
 import './index.css';
 
@@ -78,9 +75,6 @@ const AppRoutes: React.FC = () => {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="chat" element={<Chat />} />
-        <Route path="analysis" element={<Analysis />} />
-        <Route path="companies" element={<Companies />} />
-        <Route path="reports" element={<Reports />} />
       </Route>
       
       {/* Catch all route */}

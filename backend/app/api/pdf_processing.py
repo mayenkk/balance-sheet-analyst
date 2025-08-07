@@ -1,13 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
-from typing import Dict, Any
+from typing import Dict, Any, List
 import os
 from app.core.database import get_db
 from app.core.security import get_current_user, require_role
 from app.core.config import settings
 from app.models.user import User
+from app.models.uploaded_file import UploadedFile
+from app.schemas.uploaded_file import UploadedFileResponse, UploadedFileList
 from app.services.ai_analysis import AIAnalysisService
+from app.services.pinecone_store import PineconeStore
 from app.services.audit import AuditService
+from app.services.activity import ActivityService
 import logging
 
 logger = logging.getLogger(__name__)
@@ -15,6 +19,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/pdf", tags=["pdf-processing"])
 ai_service = AIAnalysisService()
 audit_service = AuditService()
+activity_service = ActivityService()
 
 @router.post("/process")
 async def process_balance_sheet_pdf(
@@ -24,14 +29,14 @@ async def process_balance_sheet_pdf(
 ):
     """
     Process and store balance sheet PDF in vector database
-    Only analysts and group CEOs can upload PDFs
+    Analysts, CEOs, and top management can upload PDFs
     """
     
-    # Check permissions
-    if current_user.role not in ["analyst", "group_ceo"]:
+    # Check permissions - allow analysts, CEOs, and top management
+    if current_user.role not in ["analyst", "group_ceo", "ceo", "top_management"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only analysts and group CEOs can process PDFs"
+            detail="Only analysts, CEOs, and top management can process PDFs"
         )
     
     # Validate file
@@ -53,12 +58,31 @@ async def process_balance_sheet_pdf(
         
         # Save uploaded file
         file_path = os.path.join(settings.PDF_UPLOAD_DIR, file.filename)
+        content = await file.read()
         with open(file_path, "wb") as buffer:
-            content = await file.read()
             buffer.write(content)
+        
+        # Save uploaded file record to database
+        uploaded_file = UploadedFile(
+            user_id=current_user.id,
+            filename=file.filename,
+            original_filename=file.filename,
+            file_path=file_path,
+            file_size=len(content),
+            content_type=file.content_type or "application/pdf",
+            processing_status="processing"
+        )
+        db.add(uploaded_file)
+        db.commit()
+        db.refresh(uploaded_file)
         
         # Process PDF and store in vector database
         result = await ai_service.process_pdf_and_store(file_path, db)
+        
+        # Update processing status
+        uploaded_file.is_processed = True
+        uploaded_file.processing_status = "completed"
+        db.commit()
         
         # Log the action
         await audit_service.log_action(
@@ -68,6 +92,23 @@ async def process_balance_sheet_pdf(
             details={
                 "filename": file.filename,
                 "file_size": len(content),
+                "processing_result": result,
+                "uploaded_file_id": uploaded_file.id
+            },
+            db=db
+        )
+        
+        # Log activity
+        await activity_service.log_activity(
+            user_id=current_user.id,
+            activity_type="pdf_upload",
+            title=f"Uploaded {file.filename}",
+            description=f"PDF file uploaded and processed successfully",
+            resource_type="pdf",
+            resource_id=uploaded_file.id,
+            activity_metadata={
+                "filename": file.filename,
+                "file_size": len(content),
                 "processing_result": result
             },
             db=db
@@ -75,11 +116,19 @@ async def process_balance_sheet_pdf(
         
         return {
             "message": "PDF processed successfully",
-            "result": result
+            "result": result,
+            "uploaded_file_id": uploaded_file.id
         }
         
     except Exception as e:
         logger.error(f"Error processing PDF: {e}")
+        
+        # Update processing status to failed
+        if 'uploaded_file' in locals():
+            uploaded_file.processing_status = "failed"
+            uploaded_file.error_message = str(e)
+            db.commit()
+        
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to process PDF: {str(e)}"
@@ -299,3 +348,59 @@ async def load_sample_data(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to load sample data: {str(e)}"
         ) 
+
+@router.get("/uploaded-files", response_model=UploadedFileList)
+async def get_uploaded_files(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all uploaded files for the current user"""
+    
+    files = db.query(UploadedFile).filter(
+        UploadedFile.user_id == current_user.id
+    ).order_by(UploadedFile.created_at.desc()).all()
+    
+    return UploadedFileList(
+        files=[UploadedFileResponse.from_orm(file) for file in files],
+        total=len(files)
+    )
+
+@router.get("/uploaded-files/{file_id}", response_model=UploadedFileResponse)
+async def get_uploaded_file(
+    file_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get a specific uploaded file by ID"""
+    
+    file = db.query(UploadedFile).filter(
+        UploadedFile.id == file_id,
+        UploadedFile.user_id == current_user.id
+    ).first()
+    
+    if not file:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File not found"
+        )
+    
+    return UploadedFileResponse.from_orm(file)
+
+@router.get("/all-files", response_model=UploadedFileList)
+async def get_all_uploaded_files(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all uploaded files across all users (for dashboard overview)"""
+    # Only allow analysts and group CEOs to see all files
+    if current_user.role not in ["analyst", "group_ceo"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only analysts and group CEOs can view all files"
+        )
+    
+    files = db.query(UploadedFile).join(User).order_by(UploadedFile.created_at.desc()).all()
+    return UploadedFileList(
+        files=[UploadedFileResponse.from_orm(file) for file in files],
+        total=len(files)
+    )

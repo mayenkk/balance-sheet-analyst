@@ -14,12 +14,6 @@ The Balance Sheet Analyst is a comprehensive AI-powered financial analysis platf
 │   (React)       │◄──►│   (FastAPI)     │◄──►│   (PostgreSQL)  │
 │   Port: 3000    │    │   Port: 8000    │    │   Port: 5432    │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
-                                │
-                                ▼
-                       ┌─────────────────┐
-                       │   Redis Cache   │
-                       │   Port: 6379    │
-                       └─────────────────┘
 ```
 
 ### Technology Stack
@@ -38,13 +32,11 @@ The Balance Sheet Analyst is a comprehensive AI-powered financial analysis platf
 - **Database ORM**: SQLAlchemy 2.0
 - **Authentication**: JWT with OAuth2
 - **AI Integration**: OpenAI GPT-4
-- **Caching**: Redis
 - **Validation**: Pydantic
 - **Documentation**: Auto-generated OpenAPI/Swagger
 
 #### Database
 - **Primary Database**: PostgreSQL 13
-- **Cache**: Redis 6
 - **Migrations**: Alembic
 
 #### Infrastructure
@@ -217,12 +209,6 @@ audit_logs (
 
 ## Performance Optimization
 
-### Caching Strategy
-- **Redis Cache**: Frequently accessed data
-- **Query Optimization**: Database indexing
-- **API Response Caching**: Analysis results
-- **Session Storage**: User sessions
-
 ### Scalability
 - **Horizontal Scaling**: Stateless API design
 - **Database Sharding**: Company-based partitioning
@@ -236,7 +222,6 @@ audit_logs (
 # docker-compose.yml
 services:
   postgres: PostgreSQL database
-  redis: Redis cache
   backend: FastAPI application
   frontend: React application
 ```
@@ -244,7 +229,6 @@ services:
 ### Production Environment
 - **Container Orchestration**: Kubernetes
 - **Database**: Managed PostgreSQL service
-- **Cache**: Managed Redis service
 - **Load Balancer**: Nginx/HAProxy
 - **Monitoring**: Prometheus + Grafana
 - **Logging**: ELK Stack
@@ -254,7 +238,6 @@ services:
 ### Health Checks
 - **API Health**: `/health` endpoint
 - **Database Connectivity**: Connection pool monitoring
-- **Cache Status**: Redis connectivity
 - **Service Dependencies**: Dependency health checks
 
 ### Metrics

@@ -1,7 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { Send, MessageSquare, Plus, X } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { chatAPI } from '../services/api.ts';
+import { useAuth } from '../contexts/AuthContext.tsx';
 import toast from 'react-hot-toast';
 
 interface Message {
@@ -26,20 +29,13 @@ const Chat: React.FC = () => {
   const [message, setMessage] = useState('');
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [newSessionTitle, setNewSessionTitle] = useState('');
-  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
-
-  // Mock companies data - in real app, this would come from API
-  const companies = [
-    { id: 1, name: 'Reliance Industries', ticker: 'RELIANCE' },
-    { id: 2, name: 'JIO Platforms', ticker: 'JIO' },
-    { id: 3, name: 'Reliance Retail', ticker: 'RRVL' },
-  ];
+  const { user } = useAuth();
 
   const { data: sessions, isLoading: sessionsLoading } = useQuery(
-    ['chat-sessions', selectedCompanyId],
-    () => chatAPI.getSessions(selectedCompanyId || undefined),
+    ['chat-sessions'],
+    () => chatAPI.getSessions(),
     { enabled: true }
   );
 
@@ -55,10 +51,16 @@ const Chat: React.FC = () => {
       onSuccess: () => {
         queryClient.invalidateQueries(['chat-messages', selectedSession?.id]);
         setMessage('');
+        toast.success('Message sent successfully!');
       },
       onError: (error: any) => {
-        toast.error(error.response?.data?.detail || 'Failed to send message');
+        console.error('Send message error:', error);
+        toast.error(error.response?.data?.detail || 'Failed to send message. Please try again.');
+        // Still invalidate to show any partial response
+        queryClient.invalidateQueries(['chat-messages', selectedSession?.id]);
       },
+      retry: 1,
+      retryDelay: 1000,
     }
   );
 
@@ -91,17 +93,31 @@ const Chat: React.FC = () => {
     e.preventDefault();
     if (!message.trim() || !selectedSession) return;
 
-    sendMessageMutation.mutate(message);
+    // Show loading toast
+    const loadingToast = toast.loading('Analyzing your question...');
+    
+    sendMessageMutation.mutate(message, {
+      onSuccess: () => {
+        toast.dismiss(loadingToast);
+        toast.success('Response received!');
+      },
+      onError: () => {
+        toast.dismiss(loadingToast);
+      }
+    });
   };
 
   const handleCreateSession = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSessionTitle.trim() || !selectedCompanyId) return;
+    if (!newSessionTitle.trim()) return;
 
-    createSessionMutation.mutate({
+    // Company access is handled by backend based on user role and assigned companies
+    const sessionData = {
       title: newSessionTitle,
-      company_id: selectedCompanyId,
-    });
+      company_id: 0, // Backend will handle company access based on user role
+    };
+
+    createSessionMutation.mutate(sessionData);
   };
 
   return (
@@ -124,23 +140,18 @@ const Chat: React.FC = () => {
           {/* Create Session Modal */}
           {isCreatingSession && (
             <div className="p-4 border-b border-gray-200 bg-gray-50">
+              <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-sm text-blue-800">
+                  <strong>Data Access:</strong> You have access to {
+                    user?.role === 'ceo' ? 'your assigned company data' :
+                    user?.role === 'group_ceo' ? 'all group companies data' :
+                    user?.role === 'analyst' ? 'all companies data' :
+                    user?.role === 'top_management' ? 'all companies data' :
+                    'available data'
+                  }
+                </p>
+              </div>
               <form onSubmit={handleCreateSession} className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Company</label>
-                  <select
-                    value={selectedCompanyId || ''}
-                    onChange={(e) => setSelectedCompanyId(Number(e.target.value))}
-                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-                    required
-                  >
-                    <option value="">Select a company</option>
-                    {companies.map((company) => (
-                      <option key={company.id} value={company.id}>
-                        {company.name} ({company.ticker})
-                      </option>
-                    ))}
-                  </select>
-                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Session Title</label>
                   <input
@@ -165,7 +176,6 @@ const Chat: React.FC = () => {
                     onClick={() => {
                       setIsCreatingSession(false);
                       setNewSessionTitle('');
-                      setSelectedCompanyId(null);
                     }}
                     className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
                   >
@@ -216,9 +226,18 @@ const Chat: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">{selectedSession.title}</h3>
-                    <p className="text-sm text-gray-500">
-                      Created {new Date(selectedSession.created_at).toLocaleDateString()}
-                    </p>
+                    <div className="flex items-center space-x-4">
+                      <p className="text-sm text-gray-500">
+                        Created {new Date(selectedSession.created_at).toLocaleDateString()}
+                      </p>
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {user?.role === 'ceo' ? 'Company CEO' :
+                         user?.role === 'group_ceo' ? 'Group CEO' :
+                         user?.role === 'analyst' ? 'Analyst' :
+                         user?.role === 'top_management' ? 'Top Management' :
+                         user?.role?.replace('_', ' ')}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -243,7 +262,28 @@ const Chat: React.FC = () => {
                               : 'bg-white text-gray-900 border border-gray-200'
                           }`}
                         >
-                          <div className="whitespace-pre-wrap">{msg.content}</div>
+                          <ReactMarkdown 
+                            remarkPlugins={[remarkGfm]}
+                            className="prose prose-sm max-w-none"
+                            components={{
+                              h1: ({node, ...props}) => <h1 className="text-lg font-bold mb-2" {...props} />,
+                              h2: ({node, ...props}) => <h2 className="text-base font-bold mb-2" {...props} />,
+                              h3: ({node, ...props}) => <h3 className="text-sm font-bold mb-1" {...props} />,
+                              p: ({node, ...props}) => <p className="mb-2" {...props} />,
+                              ul: ({node, ...props}) => <ul className="list-disc list-inside mb-2 space-y-1" {...props} />,
+                              ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-2 space-y-1" {...props} />,
+                              li: ({node, ...props}) => <li className="text-sm" {...props} />,
+                              strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
+                              em: ({node, ...props}) => <em className="italic" {...props} />,
+                              blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-gray-300 pl-4 italic text-gray-600" {...props} />,
+                              code: ({node, inline, ...props}) => 
+                                inline ? 
+                                  <code className="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono" {...props} /> :
+                                  <code className="block bg-gray-100 p-2 rounded text-sm font-mono overflow-x-auto" {...props} />,
+                            }}
+                          >
+                            {msg.content}
+                          </ReactMarkdown>
                           {msg.metadata && msg.role === 'assistant' && (
                             <div className="mt-2 pt-2 border-t border-gray-200">
                               {msg.metadata.insights && (
@@ -275,7 +315,11 @@ const Chat: React.FC = () => {
                     type="text"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Ask about financial data..."
+                    placeholder={
+                      user?.role === 'ceo' ? 'Ask about your company data...' :
+                      user?.role === 'group_ceo' ? 'Ask about group companies data...' :
+                      'Ask about financial data...'
+                    }
                     className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     disabled={sendMessageMutation.isLoading}
                   />

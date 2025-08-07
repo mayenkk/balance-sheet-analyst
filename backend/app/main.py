@@ -8,7 +8,7 @@ import logging
 
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.api import auth, chat, companies, pdf_processing
+from app.api import auth, chat, companies, pdf_processing, activities
 from app.services.audit import AuditService
 
 # Configure logging
@@ -58,6 +58,7 @@ app.include_router(auth.router, prefix="/api/v1")
 app.include_router(chat.router, prefix="/api/v1")
 app.include_router(companies.router, prefix="/api/v1")
 app.include_router(pdf_processing.router, prefix="/api/v1")
+app.include_router(activities.router, prefix="/api/v1")
 
 # Global exception handler
 @app.exception_handler(Exception)

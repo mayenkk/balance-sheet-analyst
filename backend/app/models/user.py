@@ -39,6 +39,8 @@ class User(Base):
     audit_logs = relationship("AuditLog", back_populates="user")
     chat_sessions = relationship("ChatSession", back_populates="user")
     analysis_reports = relationship("AnalysisReport", back_populates="user")
+    uploaded_files = relationship("UploadedFile", back_populates="user")
+    activities = relationship("Activity", back_populates="user")
     
     def has_access_to_company(self, company_id: int) -> bool:
         """Check if user has access to a specific company"""

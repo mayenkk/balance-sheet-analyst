@@ -10,11 +10,11 @@ INSERT INTO companies (name, ticker_symbol, industry, sector, description, paren
 
 -- Insert sample users
 INSERT INTO users (email, username, full_name, hashed_password, role, is_active, created_at, updated_at) VALUES
-('analyst@company.com', 'analyst', 'Financial Analyst', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK2O', 'analyst', true, NOW(), NOW()),
-('ceo@reliance.com', 'ceo_reliance', 'Mukesh Ambani', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK2O', 'group_ceo', true, NOW(), NOW()),
-('ceo@jio.com', 'ceo_jio', 'JIO CEO', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK2O', 'ceo', true, NOW(), NOW()),
-('ceo@retail.com', 'ceo_retail', 'Retail CEO', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK2O', 'ceo', true, NOW(), NOW()),
-('management@reliance.com', 'mgmt_reliance', 'Top Management', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK2O', 'top_management', true, NOW(), NOW());
+('analyst@company.com', 'analyst', 'Financial Analyst', '$2b$12$/3hnWfRsri7v/XSi87B5U.mBsbidwDMv4fytWysz9LFIwrcIKptfS', 'analyst', true, NOW(), NOW()),
+('ceo@reliance.com', 'ceo_reliance', 'Mukesh Ambani', '$2b$12$/3hnWfRsri7v/XSi87B5U.mBsbidwDMv4fytWysz9LFIwrcIKptfS', 'group_ceo', true, NOW(), NOW()),
+('ceo@jio.com', 'ceo_jio', 'JIO CEO', '$2b$12$/3hnWfRsri7v/XSi87B5U.mBsbidwDMv4fytWysz9LFIwrcIKptfS', 'ceo', true, NOW(), NOW()),
+('ceo@retail.com', 'ceo_retail', 'Retail CEO', '$2b$12$/3hnWfRsri7v/XSi87B5U.mBsbidwDMv4fytWysz9LFIwrcIKptfS', 'ceo', true, NOW(), NOW()),
+('management@reliance.com', 'mgmt_reliance', 'Top Management', '$2b$12$/3hnWfRsri7v/XSi87B5U.mBsbidwDMv4fytWysz9LFIwrcIKptfS', 'top_management', true, NOW(), NOW());
 
 -- Assign users to companies
 INSERT INTO user_companies (user_id, company_id) VALUES
@@ -23,7 +23,3 @@ INSERT INTO user_companies (user_id, company_id) VALUES
 (3, 2), (3, 4), -- JIO CEO has access to JIO companies
 (4, 3), (4, 5), -- Retail CEO has access to retail companies
 (5, 1), (5, 2), (5, 3); -- Top management has access to main companies
-
--- (Optional) Insert sample chat sessions/messages for demo/testing
--- INSERT INTO chat_sessions ...
--- INSERT INTO chat_messages ... 

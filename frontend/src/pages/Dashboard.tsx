@@ -12,9 +12,14 @@ import {
   Users,
 } from 'lucide-react';
 import { companyAPI } from '../services/api.ts';
+import { useAuth } from '../contexts/AuthContext.tsx';
 import PDFUpload from '../components/PDFUpload.tsx';
+import UploadedFiles from '../components/UploadedFiles.tsx';
+import ActiveFiles from '../components/ActiveFiles.tsx';
+import RecentActivity from '../components/RecentActivity.tsx';
 
 const Dashboard: React.FC = () => {
+  const { user } = useAuth();
   const { data: companies, isLoading } = useQuery('companies', companyAPI.getCompanies);
 
   const stats = [
@@ -22,40 +27,19 @@ const Dashboard: React.FC = () => {
       name: 'Total Companies',
       value: companies?.length || 0,
       icon: Building,
-      change: '+12%',
-      changeType: 'positive',
+      change: '',
+      changeType: 'neutral',
     },
     {
-      name: 'Active Sessions',
-      value: '24',
-      icon: MessageSquare,
-      change: '+8%',
-      changeType: 'positive',
-    },
-    {
-      name: 'Reports Generated',
-      value: '156',
-      icon: FileText,
-      change: '+23%',
-      changeType: 'positive',
-    },
-    {
-      name: 'Total Users',
-      value: '89',
+      name: 'Your Role',
+      value: user?.role?.replace('_', ' ') || 'User',
       icon: Users,
-      change: '+5%',
-      changeType: 'positive',
+      change: '',
+      changeType: 'neutral',
     },
   ];
 
   const quickActions = [
-    {
-      name: 'Start New Analysis',
-      description: 'Analyze company financial data',
-      href: '/analysis',
-      icon: BarChart3,
-      color: 'bg-blue-500',
-    },
     {
       name: 'AI Chat',
       description: 'Ask questions about financial data',
@@ -64,18 +48,11 @@ const Dashboard: React.FC = () => {
       color: 'bg-green-500',
     },
     {
-      name: 'View Reports',
-      description: 'Access generated reports',
-      href: '/reports',
+      name: 'PDF Upload',
+      description: 'Upload balance sheet PDFs for analysis',
+      href: '#',
       icon: FileText,
-      color: 'bg-purple-500',
-    },
-    {
-      name: 'Company Overview',
-      description: 'Browse company data',
-      href: '/companies',
-      icon: Building,
-      color: 'bg-orange-500',
+      color: 'bg-blue-500',
     },
   ];
 
@@ -113,21 +90,6 @@ const Dashboard: React.FC = () => {
                       <dt className="text-sm font-medium text-gray-500 truncate">{stat.name}</dt>
                       <dd className="flex items-baseline">
                         <div className="text-2xl font-semibold text-gray-900">{stat.value}</div>
-                        <div
-                          className={`ml-2 flex items-baseline text-sm font-semibold ${
-                            stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'
-                          }`}
-                        >
-                          {stat.changeType === 'positive' ? (
-                            <TrendingUp className="self-center flex-shrink-0 h-4 w-4 text-green-500" />
-                          ) : (
-                            <TrendingDown className="self-center flex-shrink-0 h-4 w-4 text-red-500" />
-                          )}
-                          <span className="sr-only">
-                            {stat.changeType === 'positive' ? 'Increased' : 'Decreased'} by
-                          </span>
-                          {stat.change}
-                        </div>
                       </dd>
                     </dl>
                   </div>
@@ -182,83 +144,20 @@ const Dashboard: React.FC = () => {
         <PDFUpload />
       </div>
 
-      {/* Recent Activity */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">Recent Activity</h3>
-          <div className="mt-5">
-            <div className="flow-root">
-              <ul className="-mb-8">
-                <li>
-                  <div className="relative pb-8">
-                    <span className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true" />
-                    <div className="relative flex space-x-3">
-                      <div>
-                        <span className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-white">
-                          <BarChart3 className="h-5 w-5 text-white" />
-                        </span>
-                      </div>
-                      <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-                        <div>
-                          <p className="text-sm text-gray-500">
-                            New analysis completed for <span className="font-medium text-gray-900">Reliance Industries</span>
-                          </p>
-                        </div>
-                        <div className="text-right text-sm whitespace-nowrap text-gray-500">
-                          <time dateTime="2023-12-01">2 hours ago</time>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </li>
-                <li>
-                  <div className="relative pb-8">
-                    <span className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true" />
-                    <div className="relative flex space-x-3">
-                      <div>
-                        <span className="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center ring-8 ring-white">
-                          <MessageSquare className="h-5 w-5 text-white" />
-                        </span>
-                      </div>
-                      <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-                        <div>
-                          <p className="text-sm text-gray-500">
-                            AI chat session started for <span className="font-medium text-gray-900">JIO Platforms</span>
-                          </p>
-                        </div>
-                        <div className="text-right text-sm whitespace-nowrap text-gray-500">
-                          <time dateTime="2023-12-01">4 hours ago</time>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </li>
-                <li>
-                  <div className="relative pb-8">
-                    <div className="relative flex space-x-3">
-                      <div>
-                        <span className="h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center ring-8 ring-white">
-                          <FileText className="h-5 w-5 text-white" />
-                        </span>
-                      </div>
-                      <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-                        <div>
-                          <p className="text-sm text-gray-500">
-                            Quarterly report generated for <span className="font-medium text-gray-900">Reliance Retail</span>
-                          </p>
-                        </div>
-                        <div className="text-right text-sm whitespace-nowrap text-gray-500">
-                          <time dateTime="2023-12-01">1 day ago</time>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
+      {/* Active Files Section */}
+      <div>
+        <h2 className="text-lg font-medium text-gray-900 mb-4">Active Files</h2>
+        <ActiveFiles />
       </div>
+
+      {/* Uploaded Files Section */}
+      <div>
+        <h2 className="text-lg font-medium text-gray-900 mb-4">Uploaded Files</h2>
+        <UploadedFiles />
+      </div>
+
+      {/* Recent Activity */}
+      <RecentActivity />
     </div>
   );
 };

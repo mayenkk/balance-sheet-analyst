@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.models.user import User
 from app.models.company import Company
 from app.core.config import settings
-from app.services.vector_store import VectorStore
+from app.services.pinecone_store import PineconeStore
 from app.services.pdf_processor import PDFProcessor
 import logging
 
@@ -27,7 +27,7 @@ class AIAnalysisService:
     """Service for AI-powered balance sheet analysis using RAG pipeline"""
     
     def __init__(self):
-        self.vector_store = VectorStore()
+        self.vector_store = PineconeStore()
         self.pdf_processor = PDFProcessor()
     
     async def analyze_balance_sheet_query(
@@ -43,8 +43,11 @@ class AIAnalysisService:
         try:
             # Get user's accessible verticals
             user_verticals = self._get_user_verticals(user)
+            logger.info(f"User {user.username} (role: {user.role}) accessing verticals: {user_verticals}")
+            logger.info(f"User companies: {[c.name for c in user.companies]}")
             
             if not user_verticals:
+                logger.warning(f"No accessible verticals for user {user.username}")
                 return {
                     "error": "No accessible company data found for your role",
                     "insights": [],
@@ -54,9 +57,6 @@ class AIAnalysisService:
             
             # Get relevant context from vector store
             context = self.vector_store.get_context_for_query(query, user_verticals)
-            
-            # Debug logging
-            logger.info(f"User verticals: {user_verticals}")
             logger.info(f"Context length: {len(context) if context else 0}")
             logger.info(f"Context preview: {context[:200] if context else 'None'}")
             
@@ -103,18 +103,24 @@ class AIAnalysisService:
     
     def _get_user_verticals(self, user: User) -> List[str]:
         """Get list of verticals user has access to based on role and company assignments"""
+        logger.info(f"Getting verticals for user: {user.username} (role: {user.role})")
+        logger.info(f"User companies: {[c.name for c in user.companies]}")
+        
         if user.role == "analyst" or user.role == "group_ceo":
             # Full access to all verticals
-            return list(settings.VERTICAL_KEYWORDS.keys())
+            verticals = list(settings.VERTICAL_KEYWORDS.keys())
+            logger.info(f"Full access user, returning all verticals: {verticals}")
+            return verticals
         
         elif user.role == "ceo":
             # Access to assigned companies only
             user_verticals = []
             for company in user.companies:
-                # Map company to vertical based on industry/sector
                 vertical = self._map_company_to_vertical(company)
+                logger.info(f"Company '{company.name}' mapped to vertical: {vertical}")
                 if vertical and vertical not in user_verticals:
                     user_verticals.append(vertical)
+            logger.info(f"CEO user verticals: {user_verticals}")
             return user_verticals
         
         elif user.role == "top_management":
@@ -122,10 +128,13 @@ class AIAnalysisService:
             user_verticals = []
             for company in user.companies:
                 vertical = self._map_company_to_vertical(company)
+                logger.info(f"Company '{company.name}' mapped to vertical: {vertical}")
                 if vertical and vertical not in user_verticals:
                     user_verticals.append(vertical)
+            logger.info(f"Top management user verticals: {user_verticals}")
             return user_verticals
         
+        logger.warning(f"No verticals found for user: {user.username}")
         return []
     
     def _map_company_to_vertical(self, company: Company) -> Optional[str]:
@@ -134,7 +143,20 @@ class AIAnalysisService:
         sector_lower = company.sector.lower()
         name_lower = company.name.lower()
         
-        # Map based on keywords
+        # Add specific company name mappings
+        company_vertical_map = {
+            "Oil to Chemicals (O2C)": "o2c",
+            "Oil & Gas": "oilgas", 
+            "Financial Services": "financial",
+            "Media & Entertainment": "media",
+            "New Energy & Materials": "newenergy"
+        }
+        
+        # Check specific company names first
+        if company.name in company_vertical_map:
+            return company_vertical_map[company.name]
+        
+        # Then check keywords
         for vertical, keywords in settings.VERTICAL_KEYWORDS.items():
             for keyword in keywords:
                 if (keyword.lower() in industry_lower or 
@@ -150,16 +172,40 @@ class AIAnalysisService:
         context: str, 
         user_verticals: List[str]
     ) -> str:
-        """Create prompt for RAG-based analysis"""
+        """Create prompt for RAG-based analysis with vertical-specific focus"""
         
-        prompt = f"""You are a financial analyst. Answer this question based on the balance sheet data:
+        vertical_names = {
+            "jio": "JIO Platforms and Telecommunications",
+            "retail": "Reliance Retail and Consumer Business", 
+            "energy": "Energy and Petroleum",
+            "chemicals": "Chemicals and Petrochemicals",
+            "media": "Media and Entertainment",
+            "financial": "Financial Services",
+            "o2c": "Oil to Chemicals (O2C)",
+            "oilgas": "Oil & Gas",
+            "newenergy": "New Energy & Materials"
+        }
+        
+        user_vertical_names = [vertical_names.get(v, v) for v in user_verticals]
+        vertical_context = ", ".join(user_vertical_names)
+        
+        prompt = f"""You are a financial analyst specializing in {vertical_context} data only.
+
+IMPORTANT: You can ONLY provide analysis based on the {vertical_context} data provided. Do not reference any other business verticals or companies outside of {vertical_context}.
 
 Question: {query}
 
-Balance Sheet Data:
+Available Data (ONLY {vertical_context}):
 {context}
 
-Provide a concise, professional analysis focusing on key insights and actionable recommendations. Keep your response under 300 words."""
+Instructions:
+1. Answer ONLY based on the {vertical_context} data provided above
+2. If the question asks about other verticals (like retail when you only have JIO data), clearly state that you only have access to {vertical_context} data
+3. Focus your analysis specifically on {vertical_context} performance and metrics
+4. Do not make assumptions about other business verticals
+5. If insufficient data is available for {vertical_context}, state this clearly
+
+Provide a concise, professional analysis focusing on key insights and actionable recommendations for {vertical_context} only. Keep your response under 300 words."""
         
         return prompt
     

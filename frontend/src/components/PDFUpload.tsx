@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { useMutation, useQueryClient } from 'react-query';
 import { useAuth } from '../contexts/AuthContext.tsx';
-import api from '../services/api.ts';
+import { pdfAPI } from '../services/api.ts';
+import toast from 'react-hot-toast';
 
 interface UploadResponse {
   message: string;
@@ -19,23 +21,35 @@ interface UploadResponse {
     };
     error?: string;
   };
+  uploaded_file_id?: number;
 }
 
 const PDFUpload: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [result, setResult] = useState<UploadResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const uploadMutation = useMutation(
+    (file: File) => pdfAPI.processPDF(file),
+    {
+      onSuccess: (data: UploadResponse) => {
+        toast.success('PDF uploaded and processed successfully!');
+        // Invalidate uploaded files query to refresh the list
+        queryClient.invalidateQueries('uploaded-files');
+        setFile(null);
+      },
+      onError: (error: any) => {
+        toast.error(error.response?.data?.detail || 'Upload failed');
+      },
+    }
+  );
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile && selectedFile.type === 'application/pdf') {
       setFile(selectedFile);
-      setError(null);
-      setResult(null);
     } else {
-      setError('Please select a valid PDF file');
+      toast.error('Please select a valid PDF file');
       setFile(null);
     }
   };
@@ -43,32 +57,13 @@ const PDFUpload: React.FC = () => {
   const handleUpload = async () => {
     if (!file) return;
 
-    setUploading(true);
-    setError(null);
-    setResult(null);
-
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await api.post('/pdf/process', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      setResult(response.data);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Upload failed');
-    } finally {
-      setUploading(false);
-    }
+    uploadMutation.mutate(file);
   };
 
   // Helper function to get successful verticals
   const getSuccessfulVerticals = () => {
-    if (!result?.result?.vertical_results) return [];
-    return Object.entries(result.result.vertical_results)
+    if (!uploadMutation.data?.result?.vertical_results) return [];
+    return Object.entries(uploadMutation.data.result.vertical_results)
       .filter(([_, data]) => data.success)
       .map(([vertical, _]) => vertical);
   };
@@ -121,23 +116,23 @@ const PDFUpload: React.FC = () => {
         {file && (
           <button
             onClick={handleUpload}
-            disabled={uploading}
+            disabled={uploadMutation.isLoading}
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {uploading ? 'Processing...' : 'Upload and Process PDF'}
+            {uploadMutation.isLoading ? 'Processing...' : 'Upload and Process PDF'}
           </button>
         )}
 
         {/* Error Message */}
-        {error && (
+        {uploadMutation.isError && (
           <div className="flex items-center p-3 bg-red-50 border border-red-200 rounded-lg">
             <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
-            <span className="text-sm text-red-600">{error}</span>
+            <span className="text-sm text-red-600">{uploadMutation.error.response?.data?.detail || 'Upload failed'}</span>
           </div>
         )}
 
         {/* Success Message */}
-        {result && (
+        {uploadMutation.isSuccess && (
           <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
             <div className="flex items-center mb-2">
               <CheckCircle className="h-5 w-5 text-green-400 mr-2" />
@@ -145,8 +140,8 @@ const PDFUpload: React.FC = () => {
             </div>
             <div className="text-sm text-green-700">
               <p><strong>Verticals processed:</strong> {getSuccessfulVerticals().join(', ') || 'None'}</p>
-              <p><strong>Total chunks:</strong> {result.result?.total_chunks || 0}</p>
-              <p className="mt-2">{result.message}</p>
+              <p><strong>Total chunks:</strong> {uploadMutation.data?.result?.total_chunks || 0}</p>
+              <p className="mt-2">{uploadMutation.data?.message}</p>
             </div>
           </div>
         )}

@@ -16,6 +16,7 @@ from app.schemas.chat import (
 )
 from app.services.ai_analysis import AIAnalysisService
 from app.services.audit import AuditService
+from app.services.activity import ActivityService
 import logging
 
 logger = logging.getLogger(__name__)
@@ -23,6 +24,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/chat", tags=["chat"])
 ai_service = AIAnalysisService()
 audit_service = AuditService()
+activity_service = ActivityService()
 
 @router.post("/sessions", response_model=ChatSessionResponse)
 async def create_chat_session(
@@ -49,6 +51,21 @@ async def create_chat_session(
         action="create_chat_session",
         resource_type="chat_session",
         resource_id=session.id,
+        db=db
+    )
+
+    # Log activity
+    await activity_service.log_activity(
+        user_id=current_user.id,
+        activity_type="chat_session",
+        title=f"Created chat session: {session_data.title}",
+        description="New AI chat session started",
+        resource_type="chat_session",
+        resource_id=session.id,
+                    activity_metadata={
+                "session_type": session_data.session_type,
+                "title": session_data.title
+            },
         db=db
     )
 
@@ -150,6 +167,8 @@ async def send_message(
 
     # Generate AI response using RAG
     try:
+        logger.info(f"Starting AI analysis for session {session_id}, user: {current_user.username}")
+        
         # Add timeout to AI analysis
         analysis_result = await asyncio.wait_for(
             ai_service.analyze_balance_sheet_query(
@@ -157,8 +176,10 @@ async def send_message(
                 query=message_data.content,
                 db=db
             ),
-            timeout=30.0  # 30 second timeout
+            timeout=45.0  # Increased timeout to 45 seconds
         )
+
+        logger.info(f"AI analysis completed for session {session_id}")
 
         # Create AI response content
         ai_content = _format_ai_response(analysis_result)
@@ -174,6 +195,8 @@ async def send_message(
         db.commit()
         db.refresh(ai_message)
 
+        logger.info(f"AI message saved for session {session_id}")
+
         # Log the interaction
         await audit_service.log_action(
             user_id=current_user.id,
@@ -181,6 +204,22 @@ async def send_message(
             resource_type="chat_session",
             resource_id=session_id,
             details={
+                "query": message_data.content,
+                "verticals_accessed": analysis_result.get("verticals_accessed", []),
+                "context_used": analysis_result.get("context_used", 0)
+            },
+            db=db
+        )
+
+        # Log activity
+        await activity_service.log_activity(
+            user_id=current_user.id,
+            activity_type="chat_message",
+            title=f"AI Analysis: {message_data.content[:50]}...",
+            description="AI analysis completed for financial query",
+            resource_type="chat_session",
+            resource_id=session_id,
+            activity_metadata={
                 "query": message_data.content,
                 "verticals_accessed": analysis_result.get("verticals_accessed", []),
                 "context_used": analysis_result.get("context_used", 0)
@@ -198,17 +237,30 @@ async def send_message(
 
     except asyncio.TimeoutError:
         logger.error(f"AI analysis timed out for session {session_id}")
-        raise HTTPException(
-            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-            detail="Analysis timed out. Please try again."
+        # Save timeout message
+        timeout_message = ChatMessage(
+            session_id=session_id,
+            role="assistant",
+            content="I'm taking longer than expected to analyze the data. Please try again in a moment."
+        )
+        db.add(timeout_message)
+        db.commit()
+        db.refresh(timeout_message)
+
+        return ChatMessageResponse(
+            id=timeout_message.id,
+            role=timeout_message.role,
+            content=timeout_message.content,
+            message_metadata=None,
+            created_at=timeout_message.created_at
         )
     except Exception as e:
-        logger.error(f"Error generating AI response: {e}")
+        logger.error(f"Error generating AI response for session {session_id}: {e}")
         # Save error message
         error_message = ChatMessage(
             session_id=session_id,
             role="assistant",
-            content=f"Sorry, I encountered an error while analyzing the data: {str(e)}"
+            content=f"Sorry, I encountered an error while analyzing the data. Please try again or contact support if the issue persists."
         )
         db.add(error_message)
         db.commit()
