@@ -15,28 +15,28 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Copy requirements and install Python dependencies
+# Copy Python dependencies and install
 COPY backend/requirements.txt ./backend/
 RUN pip install --no-cache-dir -r backend/requirements.txt
 
-# Copy package files
-COPY package.json ./
-COPY frontend/package.json ./frontend/
-
-# Install Node.js dependencies
+# Copy frontend package.json and install Node deps
+COPY frontend/package.json frontend/package-lock.json* ./frontend/
 RUN cd frontend && npm install
 
-# Copy application code
+# Copy the rest of the codebase
 COPY . .
 
-# Build frontend
+# Build React frontend
 RUN cd frontend && npm run build
 
-# Copy built frontend to backend static directory
+# Move frontend build to backend static
 RUN mkdir -p backend/static && cp -r frontend/build/* backend/static/
 
-# Expose port
+# Set working directory to backend for server launch
+WORKDIR /app/backend
+
+# Expose FastAPI port
 EXPOSE 8000
 
-# Start command - use $PORT environment variable
-CMD ["sh", "-c", "uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT"] 
+# Start FastAPI using direct uvicorn call
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"] 
