@@ -1,14 +1,10 @@
 [phases.setup]
-nixPkgs = ["conda", "nodejs", "npm"]
+nixPkgs = ["conda", "nodejs_20", "npm", "curl"]
 
 [phases.install]
 cmds = [
-  "conda env create -f backend/environment.yml",
-  "source activate analyst-env",
-  "cd frontend && npm install",
-  "cd frontend && npm run build",
-  "mkdir -p backend/static",
-  "cp -r frontend/build/* backend/static/"
+  "chmod +x build.sh",
+  "./build.sh"
 ]
 
 [phases.build]
