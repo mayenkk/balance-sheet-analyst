@@ -18,7 +18,6 @@ interface Message {
 interface ChatSession {
   id: number;
   title: string;
-  company_id: number;
   session_type: string;
   is_active: boolean;
   created_at: string;
@@ -65,7 +64,7 @@ const Chat: React.FC = () => {
   );
 
   const createSessionMutation = useMutation(
-    (sessionData: { title: string; company_id: number }) =>
+    (sessionData: { title: string; session_type: string }) =>
       chatAPI.createSession(sessionData),
     {
       onSuccess: (newSession) => {
@@ -111,10 +110,10 @@ const Chat: React.FC = () => {
     e.preventDefault();
     if (!newSessionTitle.trim()) return;
 
-    // Company access is handled by backend based on user role and assigned companies
+    // Only send required fields - backend handles company access based on user role
     const sessionData = {
       title: newSessionTitle,
-      company_id: 0, // Backend will handle company access based on user role
+      session_type: "analysis"
     };
 
     createSessionMutation.mutate(sessionData);

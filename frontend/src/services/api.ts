@@ -76,16 +76,14 @@ export const authAPI = {
 export const chatAPI = {
   createSession: async (sessionData: {
     title: string;
-    company_id: number;
     session_type?: string;
   }) => {
     const response = await api.post('/chat/sessions', sessionData);
     return response.data;
   },
 
-  getSessions: async (companyId?: number) => {
-    const params = companyId ? { company_id: companyId } : {};
-    const response = await api.get('/chat/sessions', { params });
+  getSessions: async () => {
+    const response = await api.get('/chat/sessions');
     return response.data;
   },
 
