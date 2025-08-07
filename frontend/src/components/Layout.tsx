@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import {
   Home,
@@ -57,9 +57,9 @@ const Layout: React.FC = () => {
               {navigation.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <a
+                  <Link
                     key={item.name}
-                    href={item.href}
+                    to={item.href}
                     className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${
                       isActive(item.href)
                         ? 'bg-blue-100 text-blue-900'
@@ -68,7 +68,7 @@ const Layout: React.FC = () => {
                   >
                     <Icon className="mr-4 h-6 w-6" />
                     {item.name}
-                  </a>
+                  </Link>
                 );
               })}
             </nav>
@@ -101,9 +101,9 @@ const Layout: React.FC = () => {
                 {navigation.map((item) => {
                   const Icon = item.icon;
                   return (
-                    <a
+                    <Link
                       key={item.name}
-                      href={item.href}
+                      to={item.href}
                       className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
                         isActive(item.href)
                           ? 'bg-blue-100 text-blue-900'
@@ -112,7 +112,7 @@ const Layout: React.FC = () => {
                     >
                       <Icon className="mr-3 h-5 w-5" />
                       {item.name}
-                    </a>
+                    </Link>
                   );
                 })}
               </nav>

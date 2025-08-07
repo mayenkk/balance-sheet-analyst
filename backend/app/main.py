@@ -138,6 +138,30 @@ async def root():
             "app": "/app"
         }
 
+# Catch-all route for React Router - serve index.html for all frontend routes
+@app.get("/{full_path:path}")
+async def catch_all(full_path: str):
+    # Don't interfere with API routes
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="Not Found")
+    
+    # Don't interfere with static files
+    if full_path.startswith("static/"):
+        raise HTTPException(status_code=404, detail="Not Found")
+    
+    # Don't interfere with docs and health
+    if full_path in ["docs", "health", "openapi.json"]:
+        raise HTTPException(status_code=404, detail="Not Found")
+    
+    # Serve index.html for all other routes (React Router will handle the routing)
+    index_file = os.path.join(static_dir, "index.html")
+    if os.path.exists(index_file):
+        logger.info(f"Serving React app for route: /{full_path}")
+        return FileResponse(index_file)
+    else:
+        logger.warning(f"index.html not found at: {index_file}")
+        raise HTTPException(status_code=404, detail="Not Found")
+
 # API info endpoint
 @app.get("/api/info")
 async def api_info():
