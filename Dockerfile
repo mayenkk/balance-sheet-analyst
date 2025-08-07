@@ -38,5 +38,5 @@ WORKDIR /app/backend
 # Expose FastAPI port
 EXPOSE 8000
 
-# Start FastAPI using direct uvicorn call
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"] 
+# Start FastAPI using Railway's PORT environment variable
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port $PORT"] 

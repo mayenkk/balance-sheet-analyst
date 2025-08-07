@@ -100,19 +100,17 @@ async def health_check():
         "version": settings.VERSION
     }
 
-# Root endpoint - redirect to React app
+# Simple root endpoint for Railway health checks
 @app.get("/")
 async def root():
-    index_file = os.path.join(static_dir, "index.html")
-    if os.path.exists(index_file):
-        return FileResponse(index_file)
-    else:
-        return {
-            "message": f"Welcome to {settings.APP_NAME}",
-            "version": settings.VERSION,
-            "docs": "/docs",
-            "health": "/health"
-        }
+    return {
+        "message": f"Welcome to {settings.APP_NAME}",
+        "version": settings.VERSION,
+        "status": "running",
+        "docs": "/docs",
+        "health": "/health",
+        "app": "/app"
+    }
 
 # API info endpoint
 @app.get("/api/info")
