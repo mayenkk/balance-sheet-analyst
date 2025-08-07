@@ -1,0 +1,20 @@
+[phases.setup]
+nixPkgs = ["conda", "nodejs", "npm"]
+
+[phases.install]
+cmds = [
+  "conda env create -f backend/environment.yml",
+  "source activate analyst-env",
+  "cd frontend && npm install",
+  "cd frontend && npm run build",
+  "mkdir -p backend/static",
+  "cp -r frontend/build/* backend/static/"
+]
+
+[phases.build]
+cmds = [
+  "source activate analyst-env"
+]
+
+[start]
+cmd = "cd backend && source activate analyst-env && uvicorn app.main:app --host 0.0.0.0 --port $PORT" 
