@@ -1,10 +1,12 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import time
 import logging
+import os
 
 from app.core.config import settings
 from app.core.database import engine, Base
@@ -60,6 +62,28 @@ app.include_router(companies.router, prefix="/api/v1")
 app.include_router(pdf_processing.router, prefix="/api/v1")
 app.include_router(activities.router, prefix="/api/v1")
 
+# Mount static files (React frontend)
+static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
+if os.path.exists(static_dir):
+    app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
+    logger.info(f"Static files mounted from: {static_dir}")
+else:
+    logger.warning(f"Static directory not found: {static_dir}")
+
+# Fallback route for client-side routing
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str):
+    static_file = os.path.join(static_dir, full_path)
+    if os.path.exists(static_file) and os.path.isfile(static_file):
+        return FileResponse(static_file)
+    else:
+        # Serve index.html for client-side routing
+        index_file = os.path.join(static_dir, "index.html")
+        if os.path.exists(index_file):
+            return FileResponse(index_file)
+        else:
+            raise HTTPException(status_code=404, detail="Not found")
+
 # Global exception handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
@@ -88,16 +112,6 @@ async def health_check():
         "status": "healthy",
         "app_name": settings.APP_NAME,
         "version": settings.VERSION
-    }
-
-# Root endpoint
-@app.get("/")
-async def root():
-    return {
-        "message": f"Welcome to {settings.APP_NAME}",
-        "version": settings.VERSION,
-        "docs": "/docs",
-        "health": "/health"
     }
 
 # API info endpoint
