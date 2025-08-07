@@ -2,7 +2,7 @@ import axios, { AxiosInstance, AxiosResponse } from 'axios';
 
 // Create axios instance
 const api: AxiosInstance = axios.create({
-  baseURL: 'http://localhost:8000/api/v1',
+  baseURL: '/api/v1', // Use relative URL for production
   timeout: 60000, // Increased to 60 seconds to match backend timeout
   headers: {
     'Content-Type': 'application/json',
