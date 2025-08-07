@@ -96,7 +96,7 @@ export const chatAPI = {
     const response = await api.post(`/chat/sessions/${sessionId}/messages`, {
       content,
     }, {
-      timeout: 60000, // 60 second timeout for AI analysis
+      timeout: 90000, // 90 second timeout for AI analysis
     });
     return response.data;
   },

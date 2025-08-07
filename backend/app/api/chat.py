@@ -194,7 +194,7 @@ async def send_message(
                 query=message_data.content,
                 db=db
             ),
-            timeout=45.0  # Increased timeout to 45 seconds
+            timeout=90.0  # Increased timeout to 90 seconds for complex queries
         )
 
         logger.info(f"AI analysis completed for session {session_id}")
@@ -259,8 +259,9 @@ async def send_message(
         # Save timeout message
         timeout_message = ChatMessage(
             session_id=session_id,
-            role="assistant",
-            content="I'm taking longer than expected to analyze the data. Please try again in a moment."
+            user_id=current_user.id,
+            content="I'm taking longer than expected to analyze the data. This can happen with complex financial queries. Please try again in a moment or rephrase your question to be more specific.",
+            message_type="assistant"
         )
         db.add(timeout_message)
         db.commit()
@@ -268,7 +269,7 @@ async def send_message(
 
         return ChatMessageResponse(
             id=timeout_message.id,
-            role=timeout_message.role,
+            role=timeout_message.message_type,
             content=timeout_message.content,
             message_metadata=None,
             created_at=timeout_message.created_at
@@ -278,8 +279,9 @@ async def send_message(
         # Save error message
         error_message = ChatMessage(
             session_id=session_id,
-            role="assistant",
-            content=f"Sorry, I encountered an error while analyzing the data. Please try again or contact support if the issue persists."
+            user_id=current_user.id,
+            content="Sorry, I encountered an error while analyzing the data. Please try again or contact support if the issue persists.",
+            message_type="assistant"
         )
         db.add(error_message)
         db.commit()
@@ -287,7 +289,7 @@ async def send_message(
 
         return ChatMessageResponse(
             id=error_message.id,
-            role=error_message.role,
+            role=error_message.message_type,
             content=error_message.content,
             message_metadata=None,
             created_at=error_message.created_at

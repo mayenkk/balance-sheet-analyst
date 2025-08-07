@@ -50,15 +50,18 @@ const Chat: React.FC = () => {
       onSuccess: () => {
         queryClient.invalidateQueries(['chat-messages', selectedSession?.id]);
         setMessage('');
-        toast.success('Message sent successfully!');
+        toast.success('AI analysis completed!');
       },
       onError: (error: any) => {
         console.error('Send message error:', error);
-        toast.error(error.response?.data?.detail || 'Failed to send message. Please try again.');
+        const errorMessage = error.response?.data?.detail || 
+                           error.message || 
+                           'AI analysis is taking longer than expected. Please try again.';
+        toast.error(errorMessage);
         // Still invalidate to show any partial response
         queryClient.invalidateQueries(['chat-messages', selectedSession?.id]);
       },
-      retry: 1,
+      retry: 0, // Don't retry automatically - let user retry manually
       retryDelay: 1000,
     }
   );
@@ -92,13 +95,13 @@ const Chat: React.FC = () => {
     e.preventDefault();
     if (!message.trim() || !selectedSession) return;
 
-    // Show loading toast
-    const loadingToast = toast.loading('Analyzing your question...');
+    // Show loading toast with longer timeout message
+    const loadingToast = toast.loading('AI is analyzing your question... This may take up to 90 seconds for complex queries.');
     
     sendMessageMutation.mutate(message, {
       onSuccess: () => {
         toast.dismiss(loadingToast);
-        toast.success('Response received!');
+        toast.success('AI analysis completed!');
       },
       onError: () => {
         toast.dismiss(loadingToast);
