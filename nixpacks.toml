@@ -17,4 +17,4 @@ cmds = [
 ]
 
 [start]
-cmd = "cd backend && source activate analyst-env && uvicorn app.main:app --host 0.0.0.0 --port $PORT" 
+cmd = "source activate analyst-env && uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT" 
