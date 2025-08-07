@@ -144,7 +144,7 @@ async def get_chat_messages(
     return [
         ChatMessageResponse(
             id=message.id,
-            role=message.role,
+            role=message.message_type,  # Use message_type instead of role
             content=message.content,
             message_metadata=message.message_metadata,
             created_at=message.created_at
@@ -176,8 +176,9 @@ async def send_message(
     # Save user message
     user_message = ChatMessage(
         session_id=session_id,
-        role="user",
-        content=message_data.content
+        user_id=current_user.id,
+        content=message_data.content,
+        message_type="user"
     )
     db.add(user_message)
     db.commit()
@@ -204,8 +205,9 @@ async def send_message(
         # Save AI message
         ai_message = ChatMessage(
             session_id=session_id,
-            role="assistant",
+            user_id=current_user.id,
             content=ai_content,
+            message_type="assistant",
             message_metadata=analysis_result
         )
         db.add(ai_message)
