@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext.tsx';
 import Login from './pages/Login.tsx';
+import Register from './pages/Register.tsx';
 import Dashboard from './pages/Dashboard.tsx';
 import Chat from './pages/Chat.tsx';
 import Layout from './components/Layout.tsx';
@@ -63,6 +64,11 @@ const AppRoutes: React.FC = () => {
       <Route path="/login" element={
         <PublicRoute>
           <Login />
+        </PublicRoute>
+      } />
+      <Route path="/register" element={
+        <PublicRoute>
+          <Register />
         </PublicRoute>
       } />
       

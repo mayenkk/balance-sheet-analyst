@@ -33,7 +33,12 @@ const Login: React.FC = () => {
   };
 
   const handleRegister = async (data: RegisterFormData) => {
-    const success = await register(data);
+    // Force role to be analyst for new registrations
+    const registerData = {
+      ...data,
+      role: 'analyst'
+    };
+    const success = await register(registerData);
     if (success) {
       registerForm.reset();
       setIsLogin(true);
@@ -231,20 +236,16 @@ const Login: React.FC = () => {
               </label>
               <div className="mt-1">
                 <select
-                  {...registerForm.register('role', { required: 'Role is required' })}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  {...registerForm.register('role')}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-gray-100"
+                  disabled
                 >
-                  <option value="">Select a role</option>
-                  <option value="analyst">Financial Analyst</option>
-                  <option value="ceo">CEO</option>
-                  <option value="top_management">Top Management</option>
+                  <option value="analyst">Financial Analyst (Default)</option>
                 </select>
               </div>
-              {registerForm.formState.errors.role && (
-                <p className="mt-1 text-sm text-red-600">
-                  {registerForm.formState.errors.role.message}
-                </p>
-              )}
+              <p className="mt-1 text-sm text-gray-500">
+                New registrations are automatically assigned as analysts with access to all company data.
+              </p>
             </div>
 
             <div>

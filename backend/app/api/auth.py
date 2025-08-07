@@ -28,7 +28,7 @@ audit_service = AuditService()
 
 @router.post("/register", response_model=UserResponse)
 async def register(user_data: UserCreate, db: Session = Depends(get_db)):
-    """Register a new user"""
+    """Register a new user - only analysts can register"""
     
     # Check if user already exists
     existing_user = db.query(User).filter(
@@ -41,19 +41,44 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
             detail="User with this email or username already exists"
         )
     
-    # Create new user
+    # Force role to be analyst for new registrations
+    if user_data.role and user_data.role != UserRole.ANALYST:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only analyst role is allowed for new registrations"
+        )
+    
+    # Create new user as analyst
     hashed_password = get_password_hash(user_data.password)
     user = User(
         email=user_data.email,
         username=user_data.username,
         full_name=user_data.full_name,
         hashed_password=hashed_password,
-        role=user_data.role or UserRole.ANALYST
+        role=UserRole.ANALYST  # Force analyst role
     )
     
     db.add(user)
     db.commit()
     db.refresh(user)
+    
+    # Assign user to all companies (analyst access)
+    from app.models.company import Company
+    from app.models.user import user_companies
+    
+    # Get all companies
+    all_companies = db.query(Company).all()
+    
+    # Create user-company relationships for all companies
+    for company in all_companies:
+        db.execute(
+            user_companies.insert().values(
+                user_id=user.id,
+                company_id=company.id
+            )
+        )
+    
+    db.commit()
     
     # Log the registration
     await audit_service.log_action(
@@ -61,6 +86,11 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
         action="register",
         resource_type="user",
         resource_id=user.id,
+        details={
+            "role": "analyst",
+            "companies_assigned": len(all_companies),
+            "access_level": "full_access"
+        },
         db=db
     )
     

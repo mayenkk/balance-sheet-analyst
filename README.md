@@ -22,9 +22,10 @@ This project implements a comprehensive AI-powered balance sheet analysis platfo
    - **Financial Services CEO:** `ceo@financial.com` / `password`
    - **Media & Entertainment CEO:** `ceo@media.com` / `password`
    - **New Energy & Materials CEO:** `ceo@newenergy.com` / `password`
-3. **Upload PDF balance sheets** for analysis
-4. **Start AI chat** for financial insights
-5. **View dashboard** for activity tracking
+3. **Or register as a new analyst** with full access to all companies
+4. **Upload PDF balance sheets** for analysis
+5. **Start AI chat** for financial insights
+6. **View dashboard** for activity tracking
 
 ### **For Developers:**
 1. **Clone the repository**
@@ -40,6 +41,7 @@ This project implements a comprehensive AI-powered balance sheet analysis platfo
 - **CEOs**: Company-specific access (e.g., JIO CEO sees only JIO data)
 - **Group CEOs**: Access to all group companies (e.g., Ambani sees all Reliance companies)
 - **Top Management**: Limited access to assigned companies
+- **User Registration**: New users can register as analysts with automatic access to all companies
 
 ### **AI-Powered Chat Interface**
 - **Real-time messaging** with AI responses using Gemini LLM
