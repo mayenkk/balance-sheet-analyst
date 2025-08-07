@@ -73,6 +73,15 @@ if os.path.exists(static_dir):
     try:
         static_files = os.listdir(static_dir)
         logger.info(f"Static files found: {static_files}")
+        
+        # Check if there's a nested static directory
+        nested_static = os.path.join(static_dir, "static")
+        if os.path.exists(nested_static):
+            logger.info(f"Nested static directory found: {nested_static}")
+            # Mount the nested static directory at /static
+            app.mount("/static", StaticFiles(directory=nested_static), name="static_files")
+            logger.info(f"Nested static files mounted at /static")
+        
     except Exception as e:
         logger.error(f"Error listing static directory: {e}")
     
