@@ -38,5 +38,5 @@ RUN mkdir -p backend/static && cp -r frontend/build/* backend/static/
 # Expose port
 EXPOSE 8000
 
-# Start command
-CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"] 
+# Start command - use $PORT environment variable
+CMD ["sh", "-c", "uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT"] 
