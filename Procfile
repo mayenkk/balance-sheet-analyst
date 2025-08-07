@@ -1,1 +1,1 @@
-web: /bin/bash -c "source activate analyst-env && uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT" 
+web: uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT 

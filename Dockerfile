@@ -1,36 +1,30 @@
-# Use a base image with both Python and Node.js
-FROM node:18-alpine
+# Use Python base image
+FROM python:3.10-slim
 
 # Install system dependencies
-RUN apk add --no-cache \
-    python3 \
-    py3-pip \
-    bash \
+RUN apt-get update && apt-get install -y \
     curl \
     wget \
-    git
-
-# Install Miniconda
-RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh && \
-    bash /tmp/miniconda.sh -b -p /opt/conda && \
-    rm /tmp/miniconda.sh
-
-# Add conda to PATH
-ENV PATH="/opt/conda/bin:$PATH"
+    git \
+    build-essential \
+    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
 
+# Copy requirements and install Python dependencies
+COPY backend/requirements.txt ./backend/
+RUN pip install --no-cache-dir -r backend/requirements.txt
+
 # Copy package files
 COPY package.json ./
 COPY frontend/package.json ./frontend/
-COPY backend/environment.yml ./backend/
 
 # Install Node.js dependencies
 RUN cd frontend && npm install
-
-# Create conda environment
-RUN conda env create -f backend/environment.yml
 
 # Copy application code
 COPY . .
@@ -45,4 +39,4 @@ RUN mkdir -p backend/static && cp -r frontend/build/* backend/static/
 EXPOSE 8000
 
 # Start command
-CMD ["/bin/bash", "-c", "source activate analyst-env && uvicorn backend.app.main:app --host 0.0.0.0 --port 8000"] 
+CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"] 
