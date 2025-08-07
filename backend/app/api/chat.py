@@ -33,49 +33,66 @@ async def create_chat_session(
     db: Session = Depends(get_db)
 ):
     """Create a new chat session"""
+    
+    try:
+        # Create chat session
+        session = ChatSession(
+            user_id=current_user.id,
+            title=session_data.title,
+            session_type=session_data.session_type
+        )
 
-    # Create chat session
-    session = ChatSession(
-        user_id=current_user.id,
-        title=session_data.title,
-        session_type=session_data.session_type
-    )
+        db.add(session)
+        db.commit()
+        db.refresh(session)
+        
+        logger.info(f"Created chat session {session.id} for user {current_user.id}")
 
-    db.add(session)
-    db.commit()
-    db.refresh(session)
+        # Log the action
+        try:
+            await audit_service.log_action(
+                user_id=current_user.id,
+                action="create_chat_session",
+                resource_type="chat_session",
+                resource_id=session.id,
+                db=db
+            )
+        except Exception as audit_error:
+            logger.error(f"Audit logging failed: {audit_error}")
 
-    # Log the action
-    await audit_service.log_action(
-        user_id=current_user.id,
-        action="create_chat_session",
-        resource_type="chat_session",
-        resource_id=session.id,
-        db=db
-    )
+        # Log activity
+        try:
+            await activity_service.log_activity(
+                user_id=current_user.id,
+                activity_type="chat_session",
+                title=f"Created chat session: {session_data.title}",
+                description="New AI chat session started",
+                resource_type="chat_session",
+                resource_id=session.id,
+                activity_metadata={
+                    "session_type": session_data.session_type,
+                    "title": session_data.title
+                },
+                db=db
+            )
+        except Exception as activity_error:
+            logger.error(f"Activity logging failed: {activity_error}")
 
-    # Log activity
-    await activity_service.log_activity(
-        user_id=current_user.id,
-        activity_type="chat_session",
-        title=f"Created chat session: {session_data.title}",
-        description="New AI chat session started",
-        resource_type="chat_session",
-        resource_id=session.id,
-                    activity_metadata={
-                "session_type": session_data.session_type,
-                "title": session_data.title
-            },
-        db=db
-    )
-
-    return ChatSessionResponse(
-        id=session.id,
-        title=session.title,
-        session_type=session.session_type,
-        is_active=session.is_active,
-        created_at=session.created_at
-    )
+        return ChatSessionResponse(
+            id=session.id,
+            title=session.title,
+            session_type=session.session_type,
+            is_active=session.is_active,
+            created_at=session.created_at
+        )
+        
+    except Exception as e:
+        logger.error(f"Error creating chat session: {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create chat session: {str(e)}"
+        )
 
 @router.get("/sessions", response_model=List[ChatSessionResponse])
 async def get_chat_sessions(
