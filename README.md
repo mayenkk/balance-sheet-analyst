@@ -7,6 +7,32 @@ This project implements a comprehensive AI-powered balance sheet analysis platfo
 **Live Application:** https://web-production-58449.up.railway.app/  
 **Status:** ✅ **FULLY DEPLOYED AND FUNCTIONAL**
 
+## 🚀 Quick Start Guide
+
+### **For Users:**
+1. **Access the application** at https://web-production-58449.up.railway.app/
+2. **Login with credentials:**
+   - **Analyst:** `analyst@company.com` / `password`
+   - **JIO CEO:** `ceo@jio.com` / `password`
+   - **Retail CEO:** `ceo@retail.com` / `password`
+   - **Group CEO:** `ceo@reliance.com` / `password`
+   - **Top Management:** `management@reliance.com` / `password`
+   - **O2C CEO:** `ceo@o2c.com` / `password`
+   - **Oil & Gas CEO:** `ceo@oilgas.com` / `password`
+   - **Financial Services CEO:** `ceo@financial.com` / `password`
+   - **Media & Entertainment CEO:** `ceo@media.com` / `password`
+   - **New Energy & Materials CEO:** `ceo@newenergy.com` / `password`
+3. **Upload PDF balance sheets** for analysis
+4. **Start AI chat** for financial insights
+5. **View dashboard** for activity tracking
+
+### **For Developers:**
+1. **Clone the repository**
+2. **Set up environment variables**
+3. **Run database migrations**
+4. **Start development servers**
+5. **Access at localhost:8000**
+
 ## 🚀 Key Features Implemented
 
 ### **Multi-User Authentication & Role-Based Access Control**
@@ -312,31 +338,7 @@ def has_access_to_company(user, company_id):
 - ✅ **Database connected**
 - ✅ **Security measures active**
 
-## 🚀 Quick Start Guide
 
-### **For Users:**
-1. **Access the application** at https://web-production-58449.up.railway.app/
-2. **Login with credentials:**
-   - **Analyst:** `analyst@company.com` / `password`
-   - **JIO CEO:** `ceo@jio.com` / `password`
-   - **Retail CEO:** `ceo@retail.com` / `password`
-   - **Group CEO:** `ceo@reliance.com` / `password`
-   - **Top Management:** `management@reliance.com` / `password`
-   - **O2C CEO:** `ceo@o2c.com` / `password`
-   - **Oil & Gas CEO:** `ceo@oilgas.com` / `password`
-   - **Financial Services CEO:** `ceo@financial.com` / `password`
-   - **Media & Entertainment CEO:** `ceo@media.com` / `password`
-   - **New Energy & Materials CEO:** `ceo@newenergy.com` / `password`
-3. **Upload PDF balance sheets** for analysis
-4. **Start AI chat** for financial insights
-5. **View dashboard** for activity tracking
-
-### **For Developers:**
-1. **Clone the repository**
-2. **Set up environment variables**
-3. **Run database migrations**
-4. **Start development servers**
-5. **Access at localhost:8000**
 
 ## 🎯 Project Achievements
 
