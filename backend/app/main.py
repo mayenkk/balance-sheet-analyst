@@ -63,7 +63,7 @@ app.include_router(pdf_processing.router, prefix="/api/v1")
 app.include_router(activities.router, prefix="/api/v1")
 
 # Mount static files for React app
-static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
+static_dir = os.path.join(os.path.dirname(__file__), "static")
 if os.path.exists(static_dir):
     app.mount("/app", StaticFiles(directory=static_dir, html=True), name="static")
     logger.info(f"Static files mounted from: {static_dir}")
