@@ -20,14 +20,29 @@ import RecentActivity from '../components/RecentActivity.tsx';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  const { data: companies, isLoading } = useQuery('companies', companyAPI.getCompanies);
+  const { data: companies, isLoading, error } = useQuery('companies', companyAPI.getCompanies, {
+    retry: 1,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    onError: (error) => {
+      console.error('Companies API error:', error);
+    },
+    onSuccess: (data) => {
+      console.log('Companies data received:', data);
+    }
+  });
+
+  const getCompaniesCount = () => {
+    if (isLoading) return 'Loading...';
+    if (error) return 'Error';
+    return companies?.length || 0;
+  };
 
   const stats = [
     {
       name: 'Total Companies',
-      value: companies?.length || 0,
+      value: getCompaniesCount(),
       icon: Building,
-      change: '',
+      change: isLoading ? 'Loading companies...' : error ? 'Failed to load companies' : '',
       changeType: 'neutral',
     },
     {

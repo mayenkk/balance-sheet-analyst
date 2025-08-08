@@ -18,6 +18,8 @@ pandas
 numpy
 scipy
 scikit-learn
+matplotlib
+seaborn
 pytest
 pytest-asyncio
 black

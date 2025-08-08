@@ -7,6 +7,7 @@ import Login from './pages/Login.tsx';
 import Register from './pages/Register.tsx';
 import Dashboard from './pages/Dashboard.tsx';
 import Chat from './pages/Chat.tsx';
+import FinancialAnalysis from './pages/FinancialAnalysis.tsx';
 import Layout from './components/Layout.tsx';
 import './index.css';
 
@@ -81,6 +82,7 @@ const AppRoutes: React.FC = () => {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="chat" element={<Chat />} />
+        <Route path="analysis" element={<FinancialAnalysis />} />
       </Route>
       
       {/* Catch all route */}

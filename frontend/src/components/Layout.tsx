@@ -20,6 +20,7 @@ const Layout: React.FC = () => {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'AI Chat', href: '/chat', icon: MessageSquare },
+    { name: 'Financial Analysis', href: '/analysis', icon: BarChart3 },
   ];
 
   const handleLogout = async () => {

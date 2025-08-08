@@ -1,8 +1,18 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 
 // Create axios instance
+const getBaseURL = () => {
+  // In development, explicitly point to backend if proxy isn't working
+  // Check if we're running on localhost:3000 (React dev server)
+  if (window.location.hostname === 'localhost' && window.location.port === '3000') {
+    return 'http://localhost:8000/api/v1';
+  }
+  // In production or if proxy is working, use relative URL
+  return '/api/v1';
+};
+
 const api: AxiosInstance = axios.create({
-  baseURL: '/api/v1', // Use relative URL for production
+  baseURL: getBaseURL(),
   timeout: 60000, // Increased to 60 seconds to match backend timeout
   headers: {
     'Content-Type': 'application/json',
@@ -118,7 +128,7 @@ export const chatAPI = {
 // Company API
 export const companyAPI = {
   getCompanies: async () => {
-    const response = await api.get('/companies');
+    const response = await api.get('/companies/');
     return response.data;
   },
 
@@ -256,6 +266,19 @@ export const activitiesAPI = {
 
   getAllActivities: async () => {
     const response = await api.get('/activities/all');
+    return response.data;
+  },
+};
+
+// Analysis API
+export const analysisAPI = {
+  getAvailableFiles: async () => {
+    const response = await api.get('/analysis/available-files');
+    return response.data;
+  },
+
+  generateFinancialAnalysis: async (fileId: number) => {
+    const response = await api.post('/analysis/financial-analysis', { file_id: fileId });
     return response.data;
   },
 };
