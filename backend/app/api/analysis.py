@@ -31,49 +31,41 @@ async def generate_financial_analysis(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Generate financial analysis and plots from uploaded PDF"""
-    
+    """Generate financial analysis and plots from an uploaded PDF that belongs to the current user"""
     try:
-        # Get the uploaded file
+        # Strictly require the file to be uploaded by the current user
         uploaded_file = db.query(UploadedFile).filter(
             UploadedFile.id == request.file_id,
             UploadedFile.user_id == current_user.id
         ).first()
-        
+
         if not uploaded_file:
-            # Check if user has access to all files (analyst or group CEO)
-            if current_user.role in ['analyst', 'group_ceo']:
-                uploaded_file = db.query(UploadedFile).filter(
-                    UploadedFile.id == request.file_id
-                ).first()
-            
-            if not uploaded_file:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="File not found or access denied"
-                )
-        
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="File not found or access denied"
+            )
+
         # Extract text from PDF
         pdf_processor = PDFProcessor()
         pdf_content = pdf_processor._extract_text_from_pdf(uploaded_file.file_path)
-        
+
         if not pdf_content:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Unable to extract text from PDF"
             )
-        
+
         # Generate financial analysis
         analysis_result = await plotting_service.generate_financial_analysis(
             pdf_content, current_user, db
         )
-        
+
         if not analysis_result.get("success"):
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=analysis_result.get("error", "Failed to generate analysis")
             )
-        
+
         # Log the analysis
         await audit_service.log_action(
             user_id=current_user.id,
@@ -87,7 +79,7 @@ async def generate_financial_analysis(
             },
             db=db
         )
-        
+
         # Log activity
         await activity_service.log_activity(
             user_id=current_user.id,
@@ -104,7 +96,7 @@ async def generate_financial_analysis(
             },
             db=db
         )
-        
+
         return FinancialAnalysisResponse(
             success=True,
             financial_data=analysis_result["financial_data"],
@@ -112,7 +104,7 @@ async def generate_financial_analysis(
             insights=analysis_result["insights"],
             file_name=uploaded_file.original_filename
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -127,21 +119,13 @@ async def get_available_files_for_analysis(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get list of files available for financial analysis"""
-    
+    """Get list of files available for financial analysis (only the current user's uploads)"""
     try:
-        if current_user.role in ['analyst', 'group_ceo']:
-            # Analysts and Group CEOs can see all files
-            files = db.query(UploadedFile).filter(
-                UploadedFile.is_processed == True
-            ).all()
-        else:
-            # Other users can only see their own files
-            files = db.query(UploadedFile).filter(
-                UploadedFile.user_id == current_user.id,
-                UploadedFile.is_processed == True
-            ).all()
-        
+        files = db.query(UploadedFile).filter(
+            UploadedFile.user_id == current_user.id,
+            UploadedFile.is_processed == True
+        ).all()
+
         return {
             "files": [
                 {
@@ -153,7 +137,7 @@ async def get_available_files_for_analysis(
                 for file in files
             ]
         }
-        
+
     except Exception as e:
         logger.error(f"Error getting available files: {e}")
         raise HTTPException(
