@@ -106,7 +106,7 @@ const ActiveFiles: React.FC = () => {
 
   return (
     <div className="bg-white shadow rounded-lg p-6">
-      <div className="flex items-center justify_between mb-4">
+      <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-medium text-gray-900">Active Files</h2>
         <button
           onClick={() => refetch()}
@@ -151,9 +151,6 @@ const ActiveFiles: React.FC = () => {
                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(file.processing_status)}`}>
                   {file.processing_status}
                 </span>
-                <button className="p-1 text-gray-400 hover:text-gray-600 rounded" onClick={() => handleView(file.id, file.original_filename)}>
-                  <Eye className="h-4 w-4" />
-                </button>
               </div>
             </div>
             
