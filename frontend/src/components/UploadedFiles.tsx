@@ -53,6 +53,29 @@ const UploadedFiles: React.FC = () => {
     }
   };
 
+  const handleView = async (fileId: number, filename: string) => {
+    try {
+      const blob = await pdfAPI.viewPDF(fileId);
+      const url = window.URL.createObjectURL(blob);
+      const newWindow = window.open();
+      if (newWindow) {
+        newWindow.document.title = filename;
+        const iframe = newWindow.document.createElement('iframe');
+        iframe.src = url;
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = '0';
+        newWindow.document.body.style.margin = '0';
+        newWindow.document.body.appendChild(iframe);
+      } else {
+        // Fallback to direct navigation
+        window.location.href = url;
+      }
+    } catch (e) {
+      console.error('Failed to view PDF', e);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-32">
@@ -64,7 +87,7 @@ const UploadedFiles: React.FC = () => {
   if (!uploadedFiles || uploadedFiles.files.length === 0) {
     return (
       <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-lg font-medium text-gray-900 mb-4">Uploaded Files</h2>
+        <h2 className="text-lg font-medium text_gray_900 mb-4">Uploaded Files</h2>
         <div className="text-center py-8">
           <FileText className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-medium text-gray-900">No files uploaded</h3>
@@ -115,7 +138,7 @@ const UploadedFiles: React.FC = () => {
                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(file.processing_status)}`}>
                   {file.processing_status}
                 </span>
-                <button className="p-1 text-gray-400 hover:text-gray-600 rounded">
+                <button className="p-1 text-gray-400 hover:text-gray-600 rounded" onClick={() => handleView(file.id, file.original_filename)}>
                   <Eye className="h-4 w-4" />
                 </button>
               </div>

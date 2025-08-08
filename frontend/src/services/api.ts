@@ -250,6 +250,11 @@ export const pdfAPI = {
     const response = await api.get('/pdf/health');
     return response.data;
   },
+
+  viewPDF: async (fileId: number) => {
+    const response = await api.get(`/pdf/view/${fileId}`, { responseType: 'blob' });
+    return response.data as Blob;
+  },
 };
 
 // Activities API

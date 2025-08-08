@@ -26,12 +26,13 @@ This project implements a comprehensive AI-powered balance sheet analysis platfo
 3. **Or register as a new analyst** with full access to all companies
 4. **Upload PDF balance sheets** for analysis
 5. **Start AI chat** for financial insights
-6. **View dashboard** for activity tracking
+6. **Go to Financial Analysis** to generate plots (only your uploaded PDFs are selectable)
+7. **Click the eye icon** in uploads to preview PDFs inline
 
 ### **For Developers:**
 1. **Clone the repository**
 2. **Set up environment variables**
-3. **Run database migrations**
+3. **Run database migrations** (see “Database migrations for latest features”)
 4. **Start development servers**
 5. **Access at localhost:8000**
 
@@ -52,15 +53,16 @@ This project implements a comprehensive AI-powered balance sheet analysis platfo
 
 ### **PDF Balance Sheet Processing**
 - **Multi-format PDF parsing** using PyPDF2, pdfplumber, PyMuPDF
+- **Inline PDF viewer** via eye icon (secure, streamed from backend)
 - **Intelligent chunking** for RAG pipeline
 - **Pinecone vector storage** for semantic search
 - **Processing status tracking** with error handling
 
 ### **Advanced Financial Analysis**
 - **RAG-powered insights** using Pinecone + Gemini
-- **Role-specific responses** based on user access permissions
-- **Financial ratio analysis** and trend identification
-- **Executive summaries** for top management
+- **RBAC-aware analysis**: only user’s own uploads are eligible for plotting
+- **Financial plots**: Sales Trend, Growth Rate, Assets vs Liabilities, Net Worth, Profit Margin, Debt-to-Equity
+- **Enterprise visualization**: Matplotlib/Seaborn with professional styling
 
 ### **Data Security & Audit**
 - **JWT-based authentication** with secure token management
@@ -76,7 +78,6 @@ This project implements a comprehensive AI-powered balance sheet analysis platfo
 - **Vector Database**: Pinecone for RAG pipeline
 - **PDF Processing**: PyPDF2, pdfplumber, PyMuPDF for text extraction
 - **AI Integration**: Google Gemini LLM with custom prompts
-- **Authentication**: JWT with Passlib for password hashing
 - **Deployment**: Railway with Docker containerization
 
 ### **Frontend Stack (React + TypeScript)**
@@ -155,7 +156,7 @@ const userRoles = {
 - **Real-time activity tracking**
 - **File upload management**
 - **User role display**
-- **Company access overview**
+- **Company access overview (RBAC)**
 - **Recent activity feed**
 
 ## 🚀 Deployment Architecture
@@ -181,6 +182,12 @@ PINECONE_ENVIRONMENT=...
 SECRET_KEY=...
 ```
 
+### **Database migrations for latest features**
+Run these on production before deploying code updates:
+1. Apply schema fixes (audit logs, chat tables) and create new tables (`uploaded_files`, `activities`).
+2. A consolidated script `production_migration.sql` is included at repo root.
+   - Example: `psql <your-db-url> -f production_migration.sql`
+
 ## 📈 Performance Metrics
 
 ### **Response Times Achieved:**
@@ -193,7 +200,6 @@ SECRET_KEY=...
 - **PDF Processing:** 50MB max file size
 - **Vector Storage:** 10,000+ chunks capacity
 - **Database:** PostgreSQL with optimized indexing
-
 
 ## 🔒 Security Implementation
 
@@ -221,12 +227,10 @@ def has_access_to_company(user, company_id):
 - **Quick action buttons** for common tasks
 - **Responsive design** for all devices
 
-### **Chat Interface:**
-- **Real-time messaging** with instant feedback
-- **Markdown rendering** for rich text responses
-- **Loading states** with skeleton screens
-- **Error handling** with user-friendly messages
-- **Session persistence** across browser sessions
+### **Chat & Analysis:**
+- **Real-time AI chat** with formatted responses
+- **Analysis tab** with full-width professional charts
+- **Inline PDF preview** via eye icon (secure)
 
 ### **Mobile Responsive:**
 - **Tailwind CSS** responsive classes throughout
@@ -255,7 +259,7 @@ def has_access_to_company(user, company_id):
 ### **Successfully Implemented:**
 - ✅ **Multi-user authentication** with role-based access
 - ✅ **AI-powered financial analysis** using RAG pipeline
-- ✅ **PDF balance sheet processing** with vector storage
+- ✅ **PDF balance sheet processing** with vector storage + inline viewer
 - ✅ **Real-time chat interface** for financial queries
 - ✅ **Secure data isolation** per user role and company
 - ✅ **Modern React frontend** with responsive design

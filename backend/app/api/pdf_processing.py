@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import Dict, Any, List
 import os
+from fastapi.responses import FileResponse
 from app.core.database import get_db
 from app.core.security import get_current_user, require_role
 from app.core.config import settings
@@ -119,16 +120,8 @@ async def process_balance_sheet_pdf(
             "result": result,
             "uploaded_file_id": uploaded_file.id
         }
-        
     except Exception as e:
         logger.error(f"Error processing PDF: {e}")
-        
-        # Update processing status to failed
-        if 'uploaded_file' in locals():
-            uploaded_file.processing_status = "failed"
-            uploaded_file.error_message = str(e)
-            db.commit()
-        
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to process PDF: {str(e)}"
@@ -385,6 +378,32 @@ async def get_uploaded_file(
         )
     
     return UploadedFileResponse.from_orm(file)
+
+@router.get("/view/{file_id}")
+async def view_uploaded_pdf(
+    file_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Stream the PDF content inline if the current user owns the file"""
+    file = db.query(UploadedFile).filter(
+        UploadedFile.id == file_id,
+        UploadedFile.user_id == current_user.id
+    ).first()
+
+    if not file:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found or access denied")
+
+    if not os.path.exists(file.file_path):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Stored file missing on server")
+
+    # Serve inline so browser/iframe can display it
+    return FileResponse(
+        path=file.file_path,
+        media_type=file.content_type or "application/pdf",
+        filename=file.original_filename,
+        headers={"Content-Disposition": f"inline; filename=\"{file.original_filename}\""}
+    )
 
 @router.get("/all-files", response_model=UploadedFileList)
 async def get_all_uploaded_files(
