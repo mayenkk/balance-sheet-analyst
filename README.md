@@ -6,6 +6,7 @@ This project implements a comprehensive AI-powered balance sheet analysis platfo
 
 **Live Application:** https://web-production-58449.up.railway.app/  
 **Presentation Link:** https://docs.google.com/presentation/d/1dWe_7PhMPXGrbQ1RZAqCh6VlQXgaOQ3ByDvcatpzF_Q/edit?usp=sharing
+**Report Link:** https://docs.google.com/document/d/1HT_FxOsT9oCVD-TEO_akvgqRYlutlfKjBDryJtSfbu4/edit?usp=sharing
 **Status:** ✅ **FULLY DEPLOYED AND FUNCTIONAL**
 
 ## 🚀 Quick Start Guide
