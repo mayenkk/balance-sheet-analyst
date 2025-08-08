@@ -5,6 +5,7 @@
 This project implements a comprehensive AI-powered balance sheet analysis platform designed for financial analysts and top management. The system provides role-based access control, AI-driven financial insights, and secure multi-user functionality with a modern web interface.
 
 **Live Application:** https://web-production-58449.up.railway.app/  
+**Presentation Link:** https://docs.google.com/presentation/d/1dWe_7PhMPXGrbQ1RZAqCh6VlQXgaOQ3ByDvcatpzF_Q/edit?usp=sharing
 **Status:** ✅ **FULLY DEPLOYED AND FUNCTIONAL**
 
 ## 🚀 Quick Start Guide
