@@ -248,7 +248,7 @@ async def send_message(
 
         return ChatMessageResponse(
             id=ai_message.id,
-            role=ai_message.role,
+            role=ai_message.message_type,
             content=ai_message.content,
             message_metadata=ai_message.message_metadata,
             created_at=ai_message.created_at
